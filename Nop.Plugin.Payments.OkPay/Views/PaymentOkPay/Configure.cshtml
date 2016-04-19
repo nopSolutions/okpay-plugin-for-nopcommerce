@@ -1,0 +1,105 @@
+﻿@using Nop.Web.Framework
+@model Nop.Plugin.Payments.OkPay.Models.ConfigurationModel
+
+@{
+    Layout = "";
+}
+
+@Html.Action("StoreScopeConfiguration", "Setting", new { area = "Admin" })
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    <table class="adminContent">
+        <tr>
+            <td colspan="2">
+                <b>If you're using this gateway ensure that your primary store currency is supported by OkPay</b>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <b>For plug-in configuration, you must perform the following actions:</b>
+                <ul>
+                    <li>Sign up on the website okpay.com</li>
+                    <li>Sign in to your personal cabinet</li>
+                    <li>Fill out the field «Wallet ID»</li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <hr />
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.OverrideStoreCheckboxFor(model => model.WalletIdOverrideForStore, model => model.WalletId, Model.ActiveStoreScopeConfiguration)
+                @Html.NopLabelFor(model => model.WalletId):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.WalletId)
+                @Html.ValidationMessageFor(model => model.WalletId)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.OverrideStoreCheckboxFor(model => model.IpnUrlOverrideForStore, model => model.IpnUrl, Model.ActiveStoreScopeConfiguration)
+                @Html.NopLabelFor(model => model.IpnUrl):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.IpnUrl)
+                @Html.ValidationMessageFor(model => model.IpnUrl)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.OverrideStoreCheckboxFor(model => model.SuccessUrlOverrideForStore, model => model.SuccessUrl, Model.ActiveStoreScopeConfiguration)
+                @Html.NopLabelFor(model => model.SuccessUrl):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.SuccessUrl)
+                @Html.ValidationMessageFor(model => model.SuccessUrl)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.OverrideStoreCheckboxFor(model => model.FailUrlOverrideForStore, model => model.FailUrl, Model.ActiveStoreScopeConfiguration)
+                @Html.NopLabelFor(model => model.FailUrl):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.FailUrl)
+                @Html.ValidationMessageFor(model => model.FailUrl)
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <hr/>
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.OverrideStoreCheckboxFor(model => model.PassProductNamesAndTotalsOverrideForStore, model => model.PassProductNamesAndTotals, Model.ActiveStoreScopeConfiguration)
+                @Html.NopLabelFor(model => model.PassProductNamesAndTotals):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.PassProductNamesAndTotals)
+                @Html.ValidationMessageFor(model => model.PassProductNamesAndTotals)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.OverrideStoreCheckboxFor(model => model.FeesOverrideForStore, model => model.Fees, Model.ActiveStoreScopeConfiguration)
+                @Html.NopLabelFor(model => model.Fees):
+            </td>
+            <td class="adminData">
+                @Html.DropDownListFor(model => model.Fees, Model.AvailableFees)
+                @Html.ValidationMessageFor(model => model.Fees)
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="submit" name="save" class="k-button" value="@T("Admin.Common.Save")" />
+            </td>
+        </tr>
+    </table>
+
+}
