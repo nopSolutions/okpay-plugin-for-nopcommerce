@@ -203,6 +203,7 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
         public ActionResult ConfirmPay(FormCollection form)
         {
             var processor = GetPaymentProcessor();
+            return null;
         }
 
         

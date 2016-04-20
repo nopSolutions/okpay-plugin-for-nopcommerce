@@ -94,13 +94,13 @@ namespace Nop.Plugin.Payments.OkPay
 
         public void PostProcessPayment(PostProcessPaymentRequest postProcessPaymentRequest)
         {
-            var orderGuid = postProcessPaymentRequest.Order.OrderGuid;
             var orderTotal = postProcessPaymentRequest.Order.OrderTotal;
             var amount = String.Format(CultureInfo.InvariantCulture, "{0:0.00}", orderTotal);
-            var orderId = orderGuid.ToString();
+            var orderId = postProcessPaymentRequest.Order.Id;
             var orderItems = postProcessPaymentRequest.Order.OrderItems.ToList();
             var currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
             var billingInfo = postProcessPaymentRequest.Order.BillingAddress;
+            var enumerator = 1;
 
             var form = new RemotePost
             {
@@ -120,22 +120,100 @@ namespace Nop.Plugin.Payments.OkPay
             form.Add(Constants.OK_RECEIVER_KEY, _okPayPaymentSettings.WalletId);
             if (_okPayPaymentSettings.PassProductNamesAndTotals)
             {
+                decimal cartTotal = decimal.Zero;
                 // Send to OkPay order details information, include Product Name, Quantity, Price and SKU
-                for (int itemCounter = 1; itemCounter <= orderItems.Count; itemCounter++)
+                foreach (var item in orderItems)
                 {
-                    var item = orderItems[itemCounter - 1];
-                    form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, itemCounter), item.Product.Name);
-                    form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, itemCounter), item.Quantity.ToString());
-                    form.Add(String.Format(Constants.OK_ITEM_TYPE_FORMATED_KEY, itemCounter), item.Product.IsDownload? "digital": "shipment");
+                    form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), item.Product.Name);
+                    form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), item.Quantity.ToString());
+                    form.Add(String.Format(Constants.OK_ITEM_TYPE_FORMATED_KEY, enumerator),
+                        item.Product.IsDownload ? "digital" : "shipment");
                     if (!string.IsNullOrEmpty(item.Product.Sku))
-                        form.Add(String.Format(Constants.OK_ITEM_ARTICLE_FORMATED_KEY, itemCounter), item.Product.Sku);
-                    form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, itemCounter),
-                        String.Format(CultureInfo.InvariantCulture, "{0:0.00}", Math.Round(item.UnitPriceInclTax, 2)));
+                        form.Add(String.Format(Constants.OK_ITEM_ARTICLE_FORMATED_KEY, enumerator), item.Product.Sku);
+                    form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator),
+                        String.Format(CultureInfo.InvariantCulture, "{0:0.00}", Math.Round(item.UnitPriceExclTax, 2)));
+                    cartTotal += item.PriceExclTax;
+                    enumerator++;
+                }
+                // attributes
+                var attributeValues =
+                    _checkoutAttributeParser.ParseCheckoutAttributeValues(
+                        postProcessPaymentRequest.Order.CheckoutAttributesXml);
+                foreach (var val in attributeValues)
+                {
+                    var attPrice = _taxService.GetCheckoutAttributePrice(val, false,
+                        postProcessPaymentRequest.Order.Customer);
+                    //round
+                    var attPriceRounded = Math.Round(attPrice, 2);
+                    if (attPrice > decimal.Zero) //if it has a price
+                    {
+                        var attribute = val.CheckoutAttribute;
+                        if (attribute != null)
+                        {
+                            var attName = attribute.Name; //set the name
+                            form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), attName);
+                            form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), "1");
+                            form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator),
+                                attPriceRounded.ToString("0.00", CultureInfo.InvariantCulture));
+                            enumerator++;
+                            cartTotal += attPrice;
+                        }
+                    }
+                }
+                //shipping
+                var orderShippingExclTax = postProcessPaymentRequest.Order.OrderShippingExclTax;
+                var orderShippingExclTaxRounded = Math.Round(orderShippingExclTax, 2);
+                if (orderShippingExclTax > decimal.Zero)
+                {
+                    form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), "Shipping fee");
+                    form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), "1");
+                    form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator),
+                        orderShippingExclTaxRounded.ToString("0.00", CultureInfo.InvariantCulture));
+                    enumerator++;
+                    cartTotal += orderShippingExclTax;
+                }
 
+                //payment method additional fee
+                var paymentMethodAdditionalFeeExclTax =
+                    postProcessPaymentRequest.Order.PaymentMethodAdditionalFeeExclTax;
+                var paymentMethodAdditionalFeeExclTaxRounded = Math.Round(paymentMethodAdditionalFeeExclTax, 2);
+                if (paymentMethodAdditionalFeeExclTax > decimal.Zero)
+                {
+                    form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), "Payment method fee");
+                    form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), "1");
+                    form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator),
+                        paymentMethodAdditionalFeeExclTaxRounded.ToString("0.00", CultureInfo.InvariantCulture));
+                    enumerator++;
+                    cartTotal += paymentMethodAdditionalFeeExclTax;
+                }
+
+                // tax
+                var orderTax = postProcessPaymentRequest.Order.OrderTax;
+                var orderTaxRounded = Math.Round(orderTax, 2);
+                if (orderTax > decimal.Zero)
+                {
+                    //add tax as item
+                    form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), "Sales Tax");
+                    form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), "1");
+                    form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator),
+                        orderTaxRounded.ToString("0.00", CultureInfo.InvariantCulture));
+                    cartTotal += orderTax;
+                }
+
+                if (cartTotal > postProcessPaymentRequest.Order.OrderTotal)
+                {
+                    decimal discountTotal = cartTotal - postProcessPaymentRequest.Order.OrderTotal;
+                    discountTotal = Math.Round(discountTotal, 2);
                 }
             }
+            else
+            {
+                form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), String.Format("Order Number {0}", orderId));
+                form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), "1");
+                form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator), amount);
+            }
             form.Add(Constants.OK_KIND_KEY, "payment");
-            form.Add(Constants.OK_INVOICE_KEY, orderId);
+            form.Add(Constants.OK_INVOICE_KEY, orderId.ToString());
             form.Add(Constants.OK_CURRENCY_KEY, currency.CurrencyCode);
             //General info
             form.Add(Constants.OK_PAYER_FIRST_NAME_KEY, billingInfo.FirstName.ToTransliterate());
