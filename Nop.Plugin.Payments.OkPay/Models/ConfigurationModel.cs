@@ -37,6 +37,14 @@ namespace Nop.Plugin.Payments.OkPay.Models
         public int Fees { get; set; }
         public bool FeesOverrideForStore { get; set; }
 
+        [NopResourceDisplayName("Plugins.Payments.OkPay.Fields.AdditionalFeePercentage")]
+        public bool AdditionalFeePercentage { get; set; }
+        public bool AdditionalFeePercentageOverrideForStore { get; set; }
+
+        [NopResourceDisplayName("Plugins.Payments.OkPay.Fields.AdditionalFee")]
+        public decimal? AdditionalFee { get; set; }
+        public bool AdditionalFeeOverrideForStore { get; set; }
+
         public IList<SelectListItem> AvailableFees { get; set; }
 
         public ConfigurationModel()

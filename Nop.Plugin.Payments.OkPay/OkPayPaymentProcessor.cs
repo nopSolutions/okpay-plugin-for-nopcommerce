@@ -240,7 +240,9 @@ namespace Nop.Plugin.Payments.OkPay
 
         public decimal GetAdditionalHandlingFee(IList<ShoppingCartItem> cart)
         {
-            return 0m;
+            var result = this.CalculateAdditionalFee(_orderTotalCalculationService, cart,
+                _okPayPaymentSettings.AdditionalFee, _okPayPaymentSettings.AdditionalFeePercentage);
+            return result;
         }
 
         public CapturePaymentResult Capture(CapturePaymentRequest capturePaymentRequest)
@@ -328,6 +330,11 @@ namespace Nop.Plugin.Payments.OkPay
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Hint", "Merchant – commission payable by the merchant (default); Buyer – commission payable by the buyer.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Merchant", "Merchant");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Buyer", "Buyer");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.AdditionalFeePercentage", "Additional fee. Use percentage");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.AdditionalFeePercentage.Hint", "Determines whether to apply a percentage additional fee to the order total. If not enabled, a fixed value is used.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.AdditionalFee", "Additional fee");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
+
             base.Install();
         }
         public override void Uninstall()
@@ -348,6 +355,11 @@ namespace Nop.Plugin.Payments.OkPay
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Merchant");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Buyer");
+            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.AdditionalFeePercentage");
+            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.AdditionalFeePercentage.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.AdditionalFee");
+            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.AdditionalFee.Hint");
+
             base.Uninstall();
         }
 

@@ -11,6 +11,10 @@
     <AssemblyName>Nop.Plugin.Payments.OkPay</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -70,13 +74,11 @@
     <Reference Include="System.Xml">
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnidecodeSharp">
-      <HintPath>..\..\..\..\..\..\Users\dmitry-chmir\Downloads\Libs\unidecode\UnidecodeSharp\bin\Release\UnidecodeSharp.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Controllers\PaymentOkPayController.cs" />
     <Compile Include="Infrastructure\Constants.cs" />
+    <Compile Include="Infrastructure\Unidecoder.cs" />
     <Compile Include="Models\ConfigurationModel.cs" />
     <Compile Include="OkPayPaymentProcessor.cs" />
     <Compile Include="OkPayPaymentSettings.cs" />
