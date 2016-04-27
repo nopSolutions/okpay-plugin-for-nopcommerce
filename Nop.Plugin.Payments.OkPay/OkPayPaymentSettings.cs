@@ -5,19 +5,12 @@ namespace Nop.Plugin.Payments.OkPay
     public class OkPayPaymentSettings : ISettings
     {
         public string WalletId { get; set; }
-        public string IpnUrl { get; set; }
-        public string SuccessUrl { get; set; }
-        public string FailUrl { get; set; }
         public string OrderDescription { get; set; }
-        public bool PassProductNamesAndTotals { get; set; }
+        //Currently OkPay does not support a separate parameter discounts and gift cards.
+        //Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
+        //TODO: Uncomment next time
+        //public bool PassProductNamesAndTotals { get; set; }
         public int Fees { get; set; }
-        /// <summary>
-        /// Gets or sets a value indicating whether to "additional fee" is specified as percentage. true - percentage, false - fixed value.
-        /// </summary>
-        public bool AdditionalFeePercentage { get; set; }
-        /// <summary>
-        /// Additional fee
-        /// </summary>
-        public decimal AdditionalFee { get; set; }
+        public bool ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage { get; set; }
     }
 }

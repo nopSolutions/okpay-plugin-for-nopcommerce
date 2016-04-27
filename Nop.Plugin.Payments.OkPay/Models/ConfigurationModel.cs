@@ -11,40 +11,27 @@ namespace Nop.Plugin.Payments.OkPay.Models
 
         [NopResourceDisplayName("Plugins.Payments.OkPay.Fields.WalletId")]
         public string WalletId { get; set; }
-        public bool WalletIdOverrideForStore { get; set; }
-
-        [NopResourceDisplayName("Plugins.Payments.OkPay.Fields.IpnUrl")]
-        public string IpnUrl { get; set; }
-        public bool IpnUrlOverrideForStore { get; set; }
-
-        [NopResourceDisplayName("Plugins.Payments.OkPay.Fields.SuccessUrl")]
-        public string SuccessUrl { get; set; }
-        public bool SuccessUrlOverrideForStore { get; set; }
-
-        [NopResourceDisplayName("Plugins.Payments.OkPay.Fields.FailUrl")]
-        public string FailUrl { get; set; }
-        public bool FailUrlOverrideForStore { get; set; }
+        public bool WalletId_OverrideForStore { get; set; }
 
         [NopResourceDisplayName("Plugins.Payments.OkPay.Fields.OrderDescription")]
         public string OrderDescription { get; set; }
-        public bool OrderDescriptionOverrideForStore { get; set; }
+        public bool OrderDescription_OverrideForStore { get; set; }
 
-        [NopResourceDisplayName("Plugins.Payments.OkPay.Fields.PassProductNamesAndTotals")]
-        public bool PassProductNamesAndTotals { get; set; }
-        public bool PassProductNamesAndTotalsOverrideForStore { get; set; }
+        //Currently OkPay does not support a separate parameter discounts and gift cards.
+        //Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
+        //TODO: Uncomment next time
+
+        //[NopResourceDisplayName("Plugins.Payments.OkPay.Fields.PassProductNamesAndTotals")]
+        //public bool PassProductNamesAndTotals { get; set; }
+        //public bool PassProductNamesAndTotals_OverrideForStore { get; set; }
 
         [NopResourceDisplayName("Plugins.Payments.OkPay.Fields.Fees")]
         public int Fees { get; set; }
-        public bool FeesOverrideForStore { get; set; }
+        public bool Fees_OverrideForStore { get; set; }
 
-        [NopResourceDisplayName("Plugins.Payments.OkPay.Fields.AdditionalFeePercentage")]
-        public bool AdditionalFeePercentage { get; set; }
-        public bool AdditionalFeePercentageOverrideForStore { get; set; }
-
-        [NopResourceDisplayName("Plugins.Payments.OkPay.Fields.AdditionalFee")]
-        public decimal? AdditionalFee { get; set; }
-        public bool AdditionalFeeOverrideForStore { get; set; }
-
+        [NopResourceDisplayName("Plugins.Payments.OkPay.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage")]
+        public bool ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage { get; set; }
+        public bool ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage_OverrideForStore { get; set; }
         public IList<SelectListItem> AvailableFees { get; set; }
 
         public ConfigurationModel()

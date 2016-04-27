@@ -78,11 +78,13 @@
   <ItemGroup>
     <Compile Include="Controllers\PaymentOkPayController.cs" />
     <Compile Include="Infrastructure\Constants.cs" />
+    <Compile Include="Infrastructure\TransactionStatus.cs" />
     <Compile Include="Infrastructure\Unidecoder.cs" />
     <Compile Include="Models\ConfigurationModel.cs" />
     <Compile Include="OkPayPaymentProcessor.cs" />
     <Compile Include="OkPayPaymentSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RouteProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Validators\" />

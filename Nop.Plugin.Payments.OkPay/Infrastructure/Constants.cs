@@ -54,5 +54,8 @@
         internal const string OK_RETURN_FAIL_URL_KEY = "ok_return_fail";
         internal const string OK_FEES_KEY = "ok_fees";
         internal const string OK_KIND_KEY = "ok_kind";
+        internal const string OK_VERIFY = "ok_verify";
+        internal const string OK_VERIFY_URL_NODE = "ipn-verify";
+        internal const string OK_BASE_URL = "https://checkout.okpay.com/";
     }
 }

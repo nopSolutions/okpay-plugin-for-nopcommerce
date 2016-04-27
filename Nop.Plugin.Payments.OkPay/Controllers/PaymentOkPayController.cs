@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Web.Mvc;
-using System.Xml;
 using Nop.Core;
 using Nop.Core.Domain.Payments;
 using Nop.Plugin.Payments.OkPay.Infrastructure;
@@ -26,7 +26,6 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
         private readonly IPaymentService _paymentService;
         private readonly IOrderService _orderService;
         private readonly IOrderProcessingService _orderProcessingService;
-        private readonly ILogger _logger;
         private readonly PaymentSettings _paymentSettings;
         private readonly ILocalizationService _localizationService;
         private readonly IWebHelper _webHelper;
@@ -49,7 +48,6 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             this._paymentService = paymentService;
             this._orderService = orderService;
             this._orderProcessingService = orderProcessingService;
-            this._logger = logger;
             this._paymentSettings = paymentSettings;
             this._localizationService = localizationService;
             this._webHelper = webHelper;
@@ -58,14 +56,6 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
         #endregion
 
         #region Utilites
-        /// <summary>
-        /// Get OkPay Verify URL
-        /// </summary>
-        /// <returns></returns>
-        private string GetOkPayVerifyUrl()
-        {
-            return "https://checkout.okpay.com/ipn-verify";
-        }
 
         private OkPayPaymentProcessor GetPaymentProcessor()
         {
@@ -77,17 +67,9 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             return processor;
         }
 
-        private void UpdateSetting<TPropType>(int storeScope, bool overrideForStore, OkPayPaymentSettings settings, Expression<Func<OkPayPaymentSettings, TPropType>> keySelector)
+        private string GetValue(string key, FormCollection form)
         {
-            if (overrideForStore || storeScope == 0)
-                _settingService.SaveSetting(settings, keySelector, storeScope, false);
-            else if (storeScope > 0)
-                _settingService.DeleteSetting(settings, keySelector, storeScope);
-        }
-
-        private ContentResult GetResponse(string textToResponse, OkPayPaymentProcessor processor, bool success = false)
-        {
-            throw new NotImplementedException();
+            return (form.AllKeys.Contains(key) ? form[key] : _webHelper.QueryString<string>(key)) ?? String.Empty;
         }
 
         #endregion
@@ -105,19 +87,20 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             var model = new ConfigurationModel
             {
                 WalletId = okPayPaymentSettings.WalletId,
-                IpnUrl = okPayPaymentSettings.IpnUrl,
-                SuccessUrl = okPayPaymentSettings.SuccessUrl,
-                FailUrl = okPayPaymentSettings.FailUrl,
                 OrderDescription = !string.IsNullOrEmpty(okPayPaymentSettings.OrderDescription) ? okPayPaymentSettings.OrderDescription : Constants.ORDER_DESCRIPTION,
                 ActiveStoreScopeConfiguration = storeScope,
-                PassProductNamesAndTotals = okPayPaymentSettings.PassProductNamesAndTotals,
+                //Currently OkPay does not support a separate parameter discounts and gift cards.
+                //Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
+                //TODO: Uncomment next time
+                //PassProductNamesAndTotals = okPayPaymentSettings.PassProductNamesAndTotals,
                 Fees = okPayPaymentSettings.Fees,
+                ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage = okPayPaymentSettings.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage,
             };
 
             model.AvailableFees.Add(new SelectListItem
             {
-                Text = _localizationService.GetResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Merchant", _workContext.WorkingLanguage.Id, defaultValue:"Merchant"),
-                Selected = okPayPaymentSettings.Fees==0,
+                Text = _localizationService.GetResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Merchant", _workContext.WorkingLanguage.Id, defaultValue: "Merchant"),
+                Selected = okPayPaymentSettings.Fees == 0,
                 Value = "0"
             });
 
@@ -130,13 +113,18 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
 
             if (storeScope > 0)
             {
-                model.WalletIdOverrideForStore = _settingService.SettingExists(okPayPaymentSettings, x => x.WalletId, storeScope);
-                model.IpnUrlOverrideForStore = _settingService.SettingExists(okPayPaymentSettings, x => x.IpnUrl, storeScope);
-                model.SuccessUrlOverrideForStore = _settingService.SettingExists(okPayPaymentSettings, x => x.SuccessUrl, storeScope);
-                model.FailUrlOverrideForStore = _settingService.SettingExists(okPayPaymentSettings, x => x.FailUrl, storeScope);
-                model.PassProductNamesAndTotalsOverrideForStore = _settingService.SettingExists(okPayPaymentSettings,
-                    x => x.PassProductNamesAndTotals, storeScope);
-                model.FeesOverrideForStore = _settingService.SettingExists(okPayPaymentSettings, x => x.Fees, storeScope);
+                model.WalletId_OverrideForStore = _settingService.SettingExists(okPayPaymentSettings, x => x.WalletId, storeScope);
+                model.OrderDescription_OverrideForStore = _settingService.SettingExists(okPayPaymentSettings,
+                    x => x.OrderDescription, storeScope);
+                //Currently OkPay does not support a separate parameter discounts and gift cards.
+                //Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
+                //TODO: Uncomment next time
+                //model.PassProductNamesAndTotals_OverrideForStore = _settingService.SettingExists(okPayPaymentSettings,
+                //    x => x.PassProductNamesAndTotals, storeScope);
+                model.Fees_OverrideForStore = _settingService.SettingExists(okPayPaymentSettings, x => x.Fees, storeScope);
+                model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage_OverrideForStore =
+                    _settingService.SettingExists(okPayPaymentSettings,
+                        x => x.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage, storeScope);
             }
 
             return View("~/Plugins/Payments.OkPay/Views/PaymentOkPay/Configure.cshtml", model);
@@ -156,23 +144,41 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
 
             //save settings
             okPayPaymentSettings.WalletId = model.WalletId;
-            okPayPaymentSettings.IpnUrl = model.IpnUrl;
-            okPayPaymentSettings.SuccessUrl = model.SuccessUrl;
-            okPayPaymentSettings.FailUrl = model.FailUrl;
             okPayPaymentSettings.OrderDescription = model.OrderDescription;
-            okPayPaymentSettings.PassProductNamesAndTotals = model.PassProductNamesAndTotals;
+            //Currently OkPay does not support a separate parameter discounts and gift cards.
+            //Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
+            //TODO: Uncomment next time
+            //okPayPaymentSettings.PassProductNamesAndTotals = model.PassProductNamesAndTotals;
             okPayPaymentSettings.Fees = model.Fees;
+            okPayPaymentSettings.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage =
+                model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage;
 
             /* We do not clear cache after each setting update.
              * This behavior can increase performance because cached settings will not be cleared 
              * and loaded from database after each update */
-            UpdateSetting(storeScope, model.WalletIdOverrideForStore, okPayPaymentSettings, x => x.WalletId);
-            UpdateSetting(storeScope, model.IpnUrlOverrideForStore, okPayPaymentSettings, x => x.IpnUrl);
-            UpdateSetting(storeScope, model.SuccessUrlOverrideForStore, okPayPaymentSettings, x => x.SuccessUrl);
-            UpdateSetting(storeScope, model.FailUrlOverrideForStore, okPayPaymentSettings, x => x.FailUrl);
-            UpdateSetting(storeScope, model.OrderDescriptionOverrideForStore, okPayPaymentSettings, x => x.OrderDescription);
-            UpdateSetting(storeScope, model.PassProductNamesAndTotalsOverrideForStore, okPayPaymentSettings, x => x.PassProductNamesAndTotals);
-            UpdateSetting(storeScope, model.FeesOverrideForStore, okPayPaymentSettings, x => x.Fees);
+            if (model.WalletId_OverrideForStore || storeScope == 0)
+                _settingService.SaveSetting(okPayPaymentSettings, x => x.WalletId, storeScope, false);
+            else if (storeScope > 0)
+                _settingService.DeleteSetting(okPayPaymentSettings, x => x.WalletId, storeScope);
+            if (model.OrderDescription_OverrideForStore || storeScope == 0)
+                _settingService.SaveSetting(okPayPaymentSettings, x => x.OrderDescription, storeScope, false);
+            else if (storeScope > 0)
+                _settingService.DeleteSetting(okPayPaymentSettings, x => x.OrderDescription, storeScope);
+            //Currently OkPay does not support a separate parameter discounts and gift cards.
+            //Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
+            //TODO: Uncomment next time
+            //if (model.PassProductNamesAndTotals_OverrideForStore || storeScope == 0)
+            //    _settingService.SaveSetting(okPayPaymentSettings, x => x.PassProductNamesAndTotals, storeScope, false);
+            //else if (storeScope > 0)
+            //    _settingService.DeleteSetting(okPayPaymentSettings, x => x.PassProductNamesAndTotals, storeScope);
+            if (model.Fees_OverrideForStore || storeScope == 0)
+                _settingService.SaveSetting(okPayPaymentSettings, x => x.Fees, storeScope, false);
+            else if (storeScope > 0)
+                _settingService.DeleteSetting(okPayPaymentSettings, x => x.Fees, storeScope);
+            if (model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage_OverrideForStore || storeScope == 0)
+                _settingService.SaveSetting(okPayPaymentSettings, x => x.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage, storeScope, false);
+            else if (storeScope > 0)
+                _settingService.DeleteSetting(okPayPaymentSettings, x => x.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage, storeScope);
 
             //now clear settings cache
             _settingService.ClearCache();
@@ -188,25 +194,77 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             return View("~/Plugins/Payments.OkPay/Views/PaymentOkPay/PaymentInfo.cshtml");
         }
 
-        
 
+        [NonAction]
         public override IList<string> ValidatePaymentForm(FormCollection form)
         {
             return new List<string>();
         }
 
+        [NonAction]
         public override ProcessPaymentRequest GetPaymentInfo(FormCollection form)
         {
             return new ProcessPaymentRequest();
         }
 
-        public ActionResult ConfirmPay(FormCollection form)
+        [ValidateInput(false)]
+        public ActionResult IPNHandler(FormCollection form)
         {
             var processor = GetPaymentProcessor();
-            return null;
+            TransactionStatus txnStatus;
+            if (processor.VerifyIpn(form, out txnStatus))
+            {
+                var val = GetValue(Constants.OK_INVOICE_KEY, form);
+                var orderId = 0;
+                if (!String.IsNullOrEmpty(val) && Int32.TryParse(val, out orderId))
+                {
+                    var order = _orderService.GetOrderById(orderId);
+                    if (_orderProcessingService.CanMarkOrderAsPaid(order) && txnStatus == TransactionStatus.Completed)
+                        _orderProcessingService.MarkOrderAsPaid(order);
+                    else if ((order.PaymentStatus == PaymentStatus.Paid ||
+                              order.PaymentStatus == PaymentStatus.Authorized) &&
+                             _orderProcessingService.CanCancelOrder(order) && txnStatus != TransactionStatus.Completed)
+                        _orderProcessingService.CancelOrder(order, true);
+                }
+            }
+
+            return Content("");
         }
 
-        
+        public ActionResult Fail(FormCollection form)
+        {
+            var storeScope = this.GetActiveStoreScopeConfiguration(_storeService, _workContext);
+            var okPayPaymentSettings = _settingService.LoadSetting<OkPayPaymentSettings>(storeScope);
+            if (okPayPaymentSettings.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
+            {
+                var val = GetValue(Constants.OK_INVOICE_KEY, form);
+                var orderId = 0;
+                if (!String.IsNullOrEmpty(val) && Int32.TryParse(val, out orderId))
+                {
+                    var order = _orderService.GetOrderById(orderId);
+                    if (order != null)
+                    {
+                        return RedirectToRoute("OrderDetails", new { orderId = order.Id });
+                    }
+                }
+            }
+            return RedirectToRoute("HomePage");
+        }
+
+        public ActionResult Success(FormCollection form)
+        {
+            var val = GetValue(Constants.OK_INVOICE_KEY, form);
+            var orderId = 0;
+            if (!String.IsNullOrEmpty(val) && Int32.TryParse(val, out orderId))
+            {
+                var order = _orderService.GetOrderById(orderId);
+                if (order != null)
+                {
+                    return RedirectToRoute("CheckoutCompleted", new { orderId = order.Id });
+                }
+            }
+            return RedirectToRoute("HomePage");
+        }
 
         #endregion
     }

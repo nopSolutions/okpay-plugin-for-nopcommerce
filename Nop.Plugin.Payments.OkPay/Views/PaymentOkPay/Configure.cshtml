@@ -32,7 +32,7 @@
         </tr>
         <tr>
             <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.WalletIdOverrideForStore, model => model.WalletId, Model.ActiveStoreScopeConfiguration)
+                @Html.OverrideStoreCheckboxFor(model => model.WalletId_OverrideForStore, model => model.WalletId, Model.ActiveStoreScopeConfiguration)
                 @Html.NopLabelFor(model => model.WalletId):
             </td>
             <td class="adminData">
@@ -42,52 +42,7 @@
         </tr>
         <tr>
             <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.IpnUrlOverrideForStore, model => model.IpnUrl, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.IpnUrl):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.IpnUrl)
-                @Html.ValidationMessageFor(model => model.IpnUrl)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.SuccessUrlOverrideForStore, model => model.SuccessUrl, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.SuccessUrl):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.SuccessUrl)
-                @Html.ValidationMessageFor(model => model.SuccessUrl)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.FailUrlOverrideForStore, model => model.FailUrl, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.FailUrl):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.FailUrl)
-                @Html.ValidationMessageFor(model => model.FailUrl)
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <hr/>
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.PassProductNamesAndTotalsOverrideForStore, model => model.PassProductNamesAndTotals, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.PassProductNamesAndTotals):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.PassProductNamesAndTotals)
-                @Html.ValidationMessageFor(model => model.PassProductNamesAndTotals)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.FeesOverrideForStore, model => model.Fees, Model.ActiveStoreScopeConfiguration)
+                @Html.OverrideStoreCheckboxFor(model => model.Fees_OverrideForStore, model => model.Fees, Model.ActiveStoreScopeConfiguration)
                 @Html.NopLabelFor(model => model.Fees):
             </td>
             <td class="adminData">
@@ -95,6 +50,32 @@
                 @Html.ValidationMessageFor(model => model.Fees)
             </td>
         </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.OverrideStoreCheckboxFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage_OverrideForStore, model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage, Model.ActiveStoreScopeConfiguration)
+                @Html.NopLabelFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
+                @Html.ValidationMessageFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
+            </td>
+        </tr>
+                @*
+        Currently OkPay does not support a separate parameter discounts and gift cards.
+        Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
+        TODO: Uncomment next time
+
+                *@
+        @*<tr>
+            <td class="adminTitle">
+                @Html.OverrideStoreCheckboxFor(model => model.PassProductNamesAndTotals_OverrideForStore, model => model.PassProductNamesAndTotals, Model.ActiveStoreScopeConfiguration)
+                @Html.NopLabelFor(model => model.PassProductNamesAndTotals):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.PassProductNamesAndTotals)
+                @Html.ValidationMessageFor(model => model.PassProductNamesAndTotals)
+            </td>
+        </tr>*@
         <tr>
             <td colspan="2">
                 <input type="submit" name="save" class="k-button" value="@T("Admin.Common.Save")" />
