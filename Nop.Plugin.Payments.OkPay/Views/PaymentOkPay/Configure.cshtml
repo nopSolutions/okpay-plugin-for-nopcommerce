@@ -60,22 +60,22 @@
                 @Html.ValidationMessageFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
             </td>
         </tr>
-                @*
-        Currently OkPay does not support a separate parameter discounts and gift cards.
-        Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
-        TODO: Uncomment next time
+        @*
+            Currently OkPay does not support a separate parameter discounts and gift cards.
+            Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
+            TODO: Uncomment next time
 
-                *@
+        *@
         @*<tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.PassProductNamesAndTotals_OverrideForStore, model => model.PassProductNamesAndTotals, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.PassProductNamesAndTotals):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.PassProductNamesAndTotals)
-                @Html.ValidationMessageFor(model => model.PassProductNamesAndTotals)
-            </td>
-        </tr>*@
+                <td class="adminTitle">
+                    @Html.OverrideStoreCheckboxFor(model => model.PassProductNamesAndTotals_OverrideForStore, model => model.PassProductNamesAndTotals, Model.ActiveStoreScopeConfiguration)
+                    @Html.NopLabelFor(model => model.PassProductNamesAndTotals):
+                </td>
+                <td class="adminData">
+                    @Html.EditorFor(model => model.PassProductNamesAndTotals)
+                    @Html.ValidationMessageFor(model => model.PassProductNamesAndTotals)
+                </td>
+            </tr>*@
         <tr>
             <td colspan="2">
                 <input type="submit" name="save" class="k-button" value="@T("Admin.Common.Save")" />

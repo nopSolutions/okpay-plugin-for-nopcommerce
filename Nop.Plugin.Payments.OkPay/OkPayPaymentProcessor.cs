@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Net;
-using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
 using Nop.Core;
@@ -30,37 +28,41 @@ namespace Nop.Plugin.Payments.OkPay
         private readonly ISettingService _settingService;
         private readonly IWebHelper _webHelper;
         private readonly CurrencySettings _currencySettings;
-        private readonly HttpContextBase _httpContext;
         private readonly OkPayPaymentSettings _okPayPaymentSettings;
         #endregion
 
         #region Ctor
         public OkPayPaymentProcessor(
             ICurrencyService currencyService,
+            ILocalizationService localizationService,
             ISettingService settingService,
             IWebHelper webHelper,
             CurrencySettings currencySettings,
-            HttpContextBase httpContext,
             OkPayPaymentSettings okPayPaymentSettings)
         {
             _currencyService = currencyService;
+            _localizationService = localizationService;
             _settingService = settingService;
             _webHelper = webHelper;
             _currencySettings = currencySettings;
-            _httpContext = httpContext;
             _okPayPaymentSettings = okPayPaymentSettings;
         }
         #endregion
 
         #region Utilites
 
+        /// <summary>
+        /// Verifies IPN
+        /// </summary>
+        /// <param name="formCollection">Form string</param>
+        /// <param name="status">out Transaction Status</param>
+        /// <returns>Result</returns>
         public bool VerifyIpn(FormCollection formCollection, out TransactionStatus status)
         {
             var isVerified = false;
             if (formCollection != null)
             {
                 var url = String.Concat(Constants.OK_BASE_URL, Constants.OK_VERIFY_URL_NODE);
-
                 formCollection.Add(Constants.OK_VERIFY, "true");
 
                 using (var client = new WebClient())
@@ -83,6 +85,11 @@ namespace Nop.Plugin.Payments.OkPay
             return isVerified;
         }
 
+        /// <summary>
+        /// Get Transaction status
+        /// </summary>
+        /// <param name="statusStr">string variable of status from response</param>
+        /// <returns>Result</returns>
         private TransactionStatus GetStatus(string statusStr)
         {
             if (string.IsNullOrEmpty(statusStr))
@@ -123,7 +130,8 @@ namespace Nop.Plugin.Payments.OkPay
             var orderTotal = postProcessPaymentRequest.Order.OrderTotal;
             var amount = String.Format(CultureInfo.InvariantCulture, "{0:0.00}", orderTotal);
             var orderId = postProcessPaymentRequest.Order.Id;
-            var orderItems = postProcessPaymentRequest.Order.OrderItems.ToList();
+            //TODO: Uncomment next time
+            //var orderItems = postProcessPaymentRequest.Order.OrderItems.ToList();
             var currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
             var billingInfo = postProcessPaymentRequest.Order.BillingAddress;
             var enumerator = 1;
@@ -140,16 +148,15 @@ namespace Nop.Plugin.Payments.OkPay
             var ipnUrl = "https://www.nopcommerce.com/RecordQueryTest.aspx";
             var successUrl = "https://www.nopcommerce.com/RecordQueryTest.aspx";
             var failUrl = "https://www.nopcommerce.com/RecordQueryTest.aspx";
-
+#else 
+            // URL`s
+            var ipnUrl = String.Concat(storeUrl, "plugins/okpay/ipnhandler");
+            var successUrl = String.Concat(storeUrl, "plugins/okpay/success");
+            var failUrl = String.Concat(storeUrl, "plugins/okpay/fail");
+#endif
             form.Add(Constants.OK_IPN_URL_KEY, ipnUrl);
             form.Add(Constants.OK_RETURN_SUCCESS_URL_KEY, successUrl);
             form.Add(Constants.OK_RETURN_FAIL_URL_KEY, failUrl);
-#else 
-            // URL`s
-            form.Add(Constants.OK_IPN_URL_KEY, String.Concat(storeUrl, "plugins/okpay/ipnhandler"));
-            form.Add(Constants.OK_RETURN_SUCCESS_URL_KEY, String.Concat(storeUrl, "plugins/okpay/success"));
-            form.Add(Constants.OK_RETURN_FAIL_URL_KEY, String.Concat(storeUrl, "plugins/okpay/fail"));
-#endif
 
             form.Add(Constants.OK_RECEIVER_KEY, _okPayPaymentSettings.WalletId);
             /*

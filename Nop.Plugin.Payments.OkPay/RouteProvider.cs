@@ -4,17 +4,17 @@ using Nop.Web.Framework.Mvc.Routes;
 
 namespace Nop.Plugin.Payments.OkPay
 {
-    public class RouteProvider: IRouteProvider
+    public class RouteProvider : IRouteProvider
     {
         public void RegisterRoutes(RouteCollection routes)
         {
-            //confirm pay
+            //IPN handler
             routes.MapRoute("Plugin.Payments.OkPay.IPNHandler",
                  "plugins/okpay/ipnhandler",
                  new { controller = "PaymentOkPay", action = "IPNHandler" },
                  new[] { "Nop.Plugin.Payments.OkPay.Controllers" }
             );
-            //cancel
+            //fail
             routes.MapRoute("Plugin.Payments.OkPay.Fail",
                  "plugins/okpay/fail",
                  new { controller = "PaymentOkPay", action = "Fail" },
