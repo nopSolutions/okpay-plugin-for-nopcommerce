@@ -62,12 +62,11 @@ namespace Nop.Plugin.Payments.OkPay
             var isVerified = false;
             if (formCollection != null)
             {
-                var url = String.Concat(Constants.OK_BASE_URL, Constants.OK_VERIFY_URL_NODE);
                 formCollection.Add(Constants.OK_VERIFY, "true");
 
                 using (var client = new WebClient())
                 {
-                    var resultBytes = client.UploadValues(url, "POST", formCollection);
+                    var resultBytes = client.UploadValues(Constants.OK_VERIFY_URL, "POST", formCollection);
                     var result = System.Text.Encoding.Default.GetString(resultBytes);
                     // for IPN simulation testing response may be TEST
                     if (result.Equals("VERIFIED", StringComparison.InvariantCultureIgnoreCase) ||
@@ -107,7 +106,6 @@ namespace Nop.Plugin.Payments.OkPay
                     return TransactionStatus.Canceled;
                 case "hold":
                     return TransactionStatus.Hold;
-                case "error":
                 default:
                     return TransactionStatus.Error;
             }
@@ -133,27 +131,25 @@ namespace Nop.Plugin.Payments.OkPay
             //TODO: Uncomment next time
             //var orderItems = postProcessPaymentRequest.Order.OrderItems.ToList();
             var currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
-            var billingInfo = postProcessPaymentRequest.Order.BillingAddress;
             var enumerator = 1;
-            var storeUrl = _webHelper.GetStoreLocation(false);
+            var storeUrl = _webHelper.GetStoreLocation();
 
             var form = new RemotePost
             {
                 FormName = "PayPoint",
-                Url = Constants.OK_BASE_URL
+                Url = Constants.OK_PAYMENT_URL
             };
 
             //TODO: After finish tests, remove this IF DEBUG block
 #if DEBUG
             var ipnUrl = "https://www.nopcommerce.com/RecordQueryTest.aspx";
-            var successUrl = "https://www.nopcommerce.com/RecordQueryTest.aspx";
-            var failUrl = "https://www.nopcommerce.com/RecordQueryTest.aspx";
 #else 
             // URL`s
             var ipnUrl = String.Concat(storeUrl, "plugins/okpay/ipnhandler");
+#endif
             var successUrl = String.Concat(storeUrl, "plugins/okpay/success");
             var failUrl = String.Concat(storeUrl, "plugins/okpay/fail");
-#endif
+
             form.Add(Constants.OK_IPN_URL_KEY, ipnUrl);
             form.Add(Constants.OK_RETURN_SUCCESS_URL_KEY, successUrl);
             form.Add(Constants.OK_RETURN_FAIL_URL_KEY, failUrl);
@@ -264,20 +260,23 @@ namespace Nop.Plugin.Payments.OkPay
             form.Add(Constants.OK_KIND_KEY, "payment");
             form.Add(Constants.OK_INVOICE_KEY, orderId.ToString());
             form.Add(Constants.OK_CURRENCY_KEY, currency.CurrencyCode);
-            //General info
-            form.Add(Constants.OK_PAYER_FIRST_NAME_KEY, billingInfo.FirstName.ToTransliterate());
-            form.Add(Constants.OK_PAYER_LAST_NAME_KEY, billingInfo.LastName.ToTransliterate());
-            if (!string.IsNullOrEmpty(billingInfo.Company))
-                form.Add(Constants.OK_PAYER_COMPANY_NAME_KEY, billingInfo.Company.ToTransliterate());
-            form.Add(Constants.OK_PAYER_EMAIL_KEY, billingInfo.Email.ToTransliterate());
-            form.Add(Constants.OK_PAYER_PHONE_KEY, billingInfo.PhoneNumber.ToTransliterate());
-            form.Add(Constants.OK_PAYER_COUNTRY_CODE_KEY, billingInfo.Country.TwoLetterIsoCode.ToTransliterate());
-            form.Add(Constants.OK_PAYER_COUNTRY_KEY, billingInfo.Country.Name.ToTransliterate());
-            form.Add(Constants.OK_PAYER_CITY_KEY, billingInfo.City.ToTransliterate());
-            form.Add(Constants.OK_PAYER_STATE_KEY, billingInfo.StateProvince.Name);
-            form.Add(Constants.OK_PAYER_STREET_KEY, billingInfo.Address1);
-            form.Add(Constants.OK_PAYER_ZIP_KEY, billingInfo.ZipPostalCode);
             form.Add(Constants.OK_FEES_KEY, _okPayPaymentSettings.Fees.ToString());
+            //General info
+            // if you want to send the personal data of the customer, you can uncomment the following code
+
+            //var billingInfo = postProcessPaymentRequest.Order.BillingAddress;
+            //form.Add(Constants.OK_PAYER_FIRST_NAME_KEY, billingInfo.FirstName.ToTransliterate());
+            //form.Add(Constants.OK_PAYER_LAST_NAME_KEY, billingInfo.LastName.ToTransliterate());
+            //if (!string.IsNullOrEmpty(billingInfo.Company))
+            //    form.Add(Constants.OK_PAYER_COMPANY_NAME_KEY, billingInfo.Company.ToTransliterate());
+            //form.Add(Constants.OK_PAYER_EMAIL_KEY, billingInfo.Email.ToTransliterate());
+            //form.Add(Constants.OK_PAYER_PHONE_KEY, billingInfo.PhoneNumber.ToTransliterate());
+            //form.Add(Constants.OK_PAYER_COUNTRY_CODE_KEY, billingInfo.Country.TwoLetterIsoCode.ToTransliterate());
+            //form.Add(Constants.OK_PAYER_COUNTRY_KEY, billingInfo.Country.Name.ToTransliterate());
+            //form.Add(Constants.OK_PAYER_CITY_KEY, billingInfo.City.ToTransliterate());
+            //form.Add(Constants.OK_PAYER_STATE_KEY, billingInfo.StateProvince.Name);
+            //form.Add(Constants.OK_PAYER_STREET_KEY, billingInfo.Address1);
+            //form.Add(Constants.OK_PAYER_ZIP_KEY, billingInfo.ZipPostalCode);
 
             form.Post();
         }
@@ -327,6 +326,11 @@ namespace Nop.Plugin.Payments.OkPay
             return result;
         }
 
+        /// <summary>
+        /// Gets a value indicating whether customers can complete a payment after order is placed but not completed (for redirection payment methods)
+        /// </summary>
+        /// <param name="order">Order</param>
+        /// <returns>Result</returns>
         public bool CanRePostProcessPayment(Order order)
         {
             if (order == null)
@@ -361,12 +365,12 @@ namespace Nop.Plugin.Payments.OkPay
             {
                 WalletId = "OK"
             };
-            this._settingService.SaveSetting<OkPayPaymentSettings>(settings);
+            _settingService.SaveSetting(settings);
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.RedirectionTip", "You will be redirected to OKPAY site to complete the order.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId", "Wallet ID");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId.Hint", "Specify your OkPay wallet Id.");
-            //Currently OkPay does not support a separate parameter discounts and gift cards.
-            //Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
+            //currently OkPay does not support a separate parameter discounts and gift cards.
+            //therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
             //TODO: Uncomment next time
             //this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassProductNamesAndTotals", "Pass product names and order totals to OkPay");
             //this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassProductNamesAndTotals.Hint", "Check if product names and order totals should be passed to OkPay.");
@@ -382,12 +386,12 @@ namespace Nop.Plugin.Payments.OkPay
         }
         public override void Uninstall()
         {
-            this._settingService.DeleteSetting<OkPayPaymentSettings>();
+            _settingService.DeleteSetting<OkPayPaymentSettings>();
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.RedirectionTip");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId.Hint");
-            //Currently OkPay does not support a separate parameter discounts and gift cards.
-            //Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
+            //currently OkPay does not support a separate parameter discounts and gift cards.
+            //therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
             //TODO: Uncomment next time
             //this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassProductNamesAndTotals");
             //this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassProductNamesAndTotals.Hint");

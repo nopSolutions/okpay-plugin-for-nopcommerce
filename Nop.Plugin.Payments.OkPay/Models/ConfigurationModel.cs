@@ -17,8 +17,8 @@ namespace Nop.Plugin.Payments.OkPay.Models
         public string OrderDescription { get; set; }
         public bool OrderDescription_OverrideForStore { get; set; }
 
-        //Currently OkPay does not support a separate parameter discounts and gift cards.
-        //Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
+        //currently OkPay does not support a separate parameter discounts and gift cards.
+        //therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
         //TODO: Uncomment next time
 
         //[NopResourceDisplayName("Plugins.Payments.OkPay.Fields.PassProductNamesAndTotals")]
