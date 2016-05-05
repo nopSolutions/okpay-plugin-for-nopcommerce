@@ -62,7 +62,7 @@ namespace Nop.Plugin.Payments.OkPay
             var isVerified = false;
             if (formCollection != null)
             {
-                formCollection.Add(Constants.OK_VERIFY, "true");
+                formCollection.Add(Constants.OK_VERIFY_KEY, "true");
 
                 using (var client = new WebClient())
                 {
