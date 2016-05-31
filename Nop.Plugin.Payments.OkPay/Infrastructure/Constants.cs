@@ -2,7 +2,7 @@
 {
     public static class Constants
     {
-        internal const string ORDER_DESCRIPTION = "Payment order #$orderId";
+        internal const string ORDER_DESCRIPTION = "Order #{0}";
         internal const string OK_CHARSET_KEY = "ok_charset";
         internal const string OK_RECEIVER_KEY = "ok_receiver";
         internal const string OK_RECEIVER_ID_KEY = "ok_receiver_id";

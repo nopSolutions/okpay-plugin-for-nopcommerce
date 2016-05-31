@@ -149,7 +149,6 @@ namespace Nop.Plugin.Payments.OkPay
 #endif
             var successUrl = String.Concat(storeUrl, "plugins/okpay/success");
             var failUrl = String.Concat(storeUrl, "plugins/okpay/fail");
-
             form.Add(Constants.OK_IPN_URL_KEY, ipnUrl);
             form.Add(Constants.OK_RETURN_SUCCESS_URL_KEY, successUrl);
             form.Add(Constants.OK_RETURN_FAIL_URL_KEY, failUrl);
@@ -252,7 +251,7 @@ namespace Nop.Plugin.Payments.OkPay
             //}
             //else
             //{
-            form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), String.Format(_localizationService.GetResource("Plugins.Payments.OKPAY.Fields.OrderNumberText"), orderId));
+            form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), string.Format(_okPayPaymentSettings.OrderDescription, orderId));
             form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), "1");
             form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator), amount);
             //}
@@ -363,9 +362,12 @@ namespace Nop.Plugin.Payments.OkPay
         {
             var settings = new OkPayPaymentSettings
             {
+                OrderDescription = Constants.ORDER_DESCRIPTION,
                 WalletId = "OK"
             };
             _settingService.SaveSetting(settings);
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OkPay.Fields.OrderDescription", "Order description");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OkPay.Fields.OrderDescription.Hint", "Order description template.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.RedirectionTip", "You will be redirected to OKPAY site to complete the order.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId", "Wallet ID");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId.Hint", "Specify your OkPay wallet Id.");
@@ -378,7 +380,6 @@ namespace Nop.Plugin.Payments.OkPay
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Hint", "Merchant – commission payable by the merchant (default); Buyer – commission payable by the buyer.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Merchant", "Merchant");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Buyer", "Buyer");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.OrderNumberText", "Order #{0}");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage", "Return to order details page");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage.Hint", "Enable if a customer should be redirected to the order details page when he clicks \"return to store\" link on OkPay site WITHOUT completing a payment.");
 
@@ -387,6 +388,8 @@ namespace Nop.Plugin.Payments.OkPay
         public override void Uninstall()
         {
             _settingService.DeleteSetting<OkPayPaymentSettings>();
+            this.DeletePluginLocaleResource("Plugins.Payments.OkPay.Fields.OrderDescription");
+            this.DeletePluginLocaleResource("Plugins.Payments.OkPay.Fields.OrderDescription.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.RedirectionTip");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId.Hint");
@@ -399,7 +402,6 @@ namespace Nop.Plugin.Payments.OkPay
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Merchant");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Buyer");
-            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.OrderNumberText");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage.Hint");
 

@@ -42,6 +42,16 @@
         </tr>
         <tr>
             <td class="adminTitle">
+                @Html.OverrideStoreCheckboxFor(model => model.OrderDescription_OverrideForStore, model => model.OrderDescription, Model.ActiveStoreScopeConfiguration)
+                @Html.NopLabelFor(model => model.OrderDescription):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.OrderDescription)
+                @Html.ValidationMessageFor(model => model.OrderDescription)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
                 @Html.OverrideStoreCheckboxFor(model => model.Fees_OverrideForStore, model => model.Fees, Model.ActiveStoreScopeConfiguration)
                 @Html.NopLabelFor(model => model.Fees):
             </td>
