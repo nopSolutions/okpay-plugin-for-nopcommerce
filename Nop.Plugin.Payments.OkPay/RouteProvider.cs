@@ -6,6 +6,8 @@ namespace Nop.Plugin.Payments.OkPay
 {
     public class RouteProvider : IRouteProvider
     {
+        #region Methods
+
         public void RegisterRoutes(RouteCollection routes)
         {
             //IPN handler
@@ -27,6 +29,11 @@ namespace Nop.Plugin.Payments.OkPay
                  new[] { "Nop.Plugin.Payments.OkPay.Controllers" }
             );
         }
+
+        #endregion
+
+        #region Properties
+
         public int Priority
         {
             get
@@ -34,5 +41,7 @@ namespace Nop.Plugin.Payments.OkPay
                 return 0;
             }
         }
+
+        #endregion
     }
 }

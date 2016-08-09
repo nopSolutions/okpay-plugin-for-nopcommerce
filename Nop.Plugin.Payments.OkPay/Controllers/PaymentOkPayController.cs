@@ -21,6 +21,7 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
     public class PaymentOkPayController : BasePaymentController
     {
         #region Fields
+
         private readonly IWorkContext _workContext;
         private readonly IStoreService _storeService;
         private readonly ISettingService _settingService;
@@ -28,9 +29,10 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
         private readonly IPaymentService _paymentService;
         private readonly IOrderService _orderService;
         private readonly IOrderProcessingService _orderProcessingService;
-        private readonly PaymentSettings _paymentSettings;
         private readonly ILocalizationService _localizationService;
         private readonly IWebHelper _webHelper;
+        private readonly PaymentSettings _paymentSettings;
+
         #endregion
 
         #region Ctor
@@ -41,8 +43,9 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             IPaymentService paymentService,
             IOrderService orderService,
             IOrderProcessingService orderProcessingService,
-            PaymentSettings paymentSettings,
-            ILocalizationService localizationService, IWebHelper webHelper)
+            ILocalizationService localizationService, 
+            IWebHelper webHelper,
+            PaymentSettings paymentSettings)
         {
             this._workContext = workContext;
             this._storeService = storeService;
@@ -51,9 +54,9 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             this._paymentService = paymentService;
             this._orderService = orderService;
             this._orderProcessingService = orderProcessingService;
-            this._paymentSettings = paymentSettings;
             this._localizationService = localizationService;
             this._webHelper = webHelper;
+            this._paymentSettings = paymentSettings;
         }
 
         #endregion
@@ -169,29 +172,14 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             /* we do not clear cache after each setting update.
              * this behavior can increase performance because cached settings will not be cleared 
              * and loaded from database after each update */
-            if (model.WalletId_OverrideForStore || storeScope == 0)
-                _settingService.SaveSetting(okPayPaymentSettings, x => x.WalletId, storeScope, false);
-            else if (storeScope > 0)
-                _settingService.DeleteSetting(okPayPaymentSettings, x => x.WalletId, storeScope);
-            if (model.OrderDescription_OverrideForStore || storeScope == 0)
-                _settingService.SaveSetting(okPayPaymentSettings, x => x.OrderDescription, storeScope, false);
-            else if (storeScope > 0)
-                _settingService.DeleteSetting(okPayPaymentSettings, x => x.OrderDescription, storeScope);
+            _settingService.SaveSettingOverridablePerStore(okPayPaymentSettings, x => x.WalletId, model.WalletId_OverrideForStore, storeScope, false);
+            _settingService.SaveSettingOverridablePerStore(okPayPaymentSettings, x => x.OrderDescription, model.OrderDescription_OverrideForStore, storeScope, false);
             //currently OkPay does not support a separate parameter discounts and gift cards.
             //therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
             //TODO: Uncomment next time
-            //if (model.PassProductNamesAndTotals_OverrideForStore || storeScope == 0)
-            //    _settingService.SaveSetting(okPayPaymentSettings, x => x.PassProductNamesAndTotals, storeScope, false);
-            //else if (storeScope > 0)
-            //    _settingService.DeleteSetting(okPayPaymentSettings, x => x.PassProductNamesAndTotals, storeScope);
-            if (model.Fees_OverrideForStore || storeScope == 0)
-                _settingService.SaveSetting(okPayPaymentSettings, x => x.Fees, storeScope, false);
-            else if (storeScope > 0)
-                _settingService.DeleteSetting(okPayPaymentSettings, x => x.Fees, storeScope);
-            if (model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage_OverrideForStore || storeScope == 0)
-                _settingService.SaveSetting(okPayPaymentSettings, x => x.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage, storeScope, false);
-            else if (storeScope > 0)
-                _settingService.DeleteSetting(okPayPaymentSettings, x => x.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage, storeScope);
+            //_settingService.SaveSettingOverridablePerStore(okPayPaymentSettings, x => x.PassProductNamesAndTotals, model.PassProductNamesAndTotals_OverrideForStore, storeScope, false);
+            _settingService.SaveSettingOverridablePerStore(okPayPaymentSettings, x => x.Fees, model.Fees_OverrideForStore, storeScope, false);
+            _settingService.SaveSettingOverridablePerStore(okPayPaymentSettings, x => x.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage, model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage_OverrideForStore, storeScope, false);
 
             //now clear settings cache
             _settingService.ClearCache();
@@ -231,7 +219,7 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
                 if (!String.IsNullOrEmpty(val) && Int32.TryParse(val, out orderId))
                 {
                     var order = _orderService.GetOrderById(orderId);
-                    
+
                     if (_orderProcessingService.CanMarkOrderAsPaid(order) && txnStatus == TransactionStatus.Completed)
                         _orderProcessingService.MarkOrderAsPaid(order);
                     else if ((order.PaymentStatus == PaymentStatus.Paid ||
@@ -305,8 +293,8 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
                     TransactionStatus txnStatus;
                     if (processor.VerifyIpn(form, out txnStatus))
                     {
-                        if(txnStatus == TransactionStatus.Completed)
-                            return RedirectToRoute("CheckoutCompleted", new {orderId = order.Id});
+                        if (txnStatus == TransactionStatus.Completed)
+                            return RedirectToRoute("CheckoutCompleted", new { orderId = order.Id });
                         else
                             return RedirectToRoute("OrderDetails", new { orderId = order.Id });
                     }

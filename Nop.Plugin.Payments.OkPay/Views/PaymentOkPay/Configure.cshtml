@@ -9,88 +9,80 @@
 @using (Html.BeginForm())
 {
     @Html.AntiForgeryToken()
-    <table class="adminContent">
-        <tr>
-            <td colspan="2">
-                <b>If you're using this gateway ensure that your primary store currency is supported by OkPay</b>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <b>For plug-in configuration, you must perform the following actions:</b>
-                <ul>
-                    <li>Sign up on the website okpay.com</li>
-                    <li>Sign in to your personal cabinet</li>
-                    <li>Fill out the field «Wallet ID»</li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <hr />
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.WalletId_OverrideForStore, model => model.WalletId, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.WalletId):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.WalletId)
-                @Html.ValidationMessageFor(model => model.WalletId)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.OrderDescription_OverrideForStore, model => model.OrderDescription, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.OrderDescription):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.OrderDescription)
-                @Html.ValidationMessageFor(model => model.OrderDescription)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.Fees_OverrideForStore, model => model.Fees, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.Fees):
-            </td>
-            <td class="adminData">
-                @Html.DropDownListFor(model => model.Fees, Model.AvailableFees)
-                @Html.ValidationMessageFor(model => model.Fees)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.OverrideStoreCheckboxFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage_OverrideForStore, model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage, Model.ActiveStoreScopeConfiguration)
-                @Html.NopLabelFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
-                @Html.ValidationMessageFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
-            </td>
-        </tr>
-        @*
-            Currently OkPay does not support a separate parameter discounts and gift cards.
-            Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
-            TODO: Uncomment next time
-
-        *@
-        @*<tr>
-                <td class="adminTitle">
-                    @Html.OverrideStoreCheckboxFor(model => model.PassProductNamesAndTotals_OverrideForStore, model => model.PassProductNamesAndTotals, Model.ActiveStoreScopeConfiguration)
-                    @Html.NopLabelFor(model => model.PassProductNamesAndTotals):
-                </td>
-                <td class="adminData">
-                    @Html.EditorFor(model => model.PassProductNamesAndTotals)
-                    @Html.ValidationMessageFor(model => model.PassProductNamesAndTotals)
-                </td>
-            </tr>*@
-        <tr>
-            <td colspan="2">
-                <input type="submit" name="save" class="k-button" value="@T("Admin.Common.Save")" />
-            </td>
-        </tr>
-    </table>
-
+    <div class="panel-group">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <p>
+                    <b>If you're using this gateway ensure that your primary store currency is supported by OkPay</b>
+                    <br/><b>For plug-in configuration, you must perform the following actions:</b>
+                    <br/><br/>
+                    1. Sign up on the website okpay.com<br/>
+                    2. Sign in to your personal cabinet<br/>
+                    3. Fill out the field «Wallet ID»
+                </p>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.OverrideStoreCheckboxFor(model => model.WalletId_OverrideForStore, model => model.WalletId, Model.ActiveStoreScopeConfiguration)
+                        @Html.NopLabelFor(model => model.WalletId)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.WalletId)
+                        @Html.ValidationMessageFor(model => model.WalletId)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.OverrideStoreCheckboxFor(model => model.OrderDescription_OverrideForStore, model => model.OrderDescription, Model.ActiveStoreScopeConfiguration)
+                        @Html.NopLabelFor(model => model.OrderDescription)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.OrderDescription)
+                        @Html.ValidationMessageFor(model => model.OrderDescription)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.OverrideStoreCheckboxFor(model => model.Fees_OverrideForStore, model => model.Fees, Model.ActiveStoreScopeConfiguration)
+                        @Html.NopLabelFor(model => model.Fees)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopDropDownListFor(model => model.Fees, Model.AvailableFees)
+                        @Html.ValidationMessageFor(model => model.Fees)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.OverrideStoreCheckboxFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage_OverrideForStore, model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage, Model.ActiveStoreScopeConfiguration)
+                        @Html.NopLabelFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
+                        @Html.ValidationMessageFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
+                    </div>
+                </div>
+@*
+                Currently OkPay does not support a separate parameter discounts and gift cards.
+                Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
+                TODO: Uncomment next time 
+*@
+@*
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.OverrideStoreCheckboxFor(model => model.PassProductNamesAndTotals_OverrideForStore, model => model.PassProductNamesAndTotals, Model.ActiveStoreScopeConfiguration)
+                        @Html.NopLabelFor(model => model.PassProductNamesAndTotals)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.EditorFor(model => model.PassProductNamesAndTotals)
+                        @Html.ValidationMessageFor(model => model.PassProductNamesAndTotals)
+                    </div>
+                </div>
+*@
+                <div class="form-group">
+                    <div class="col-md-9 col-md-offset-3">
+                        <input type="submit" name="save" class="btn bg-blue" value="@T("Admin.Common.Save")"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 }
