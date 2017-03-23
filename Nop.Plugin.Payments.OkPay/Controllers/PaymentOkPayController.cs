@@ -105,10 +105,7 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
                 WalletId = okPayPaymentSettings.WalletId,
                 OrderDescription = !string.IsNullOrEmpty(okPayPaymentSettings.OrderDescription) ? okPayPaymentSettings.OrderDescription : Constants.ORDER_DESCRIPTION,
                 ActiveStoreScopeConfiguration = storeScope,
-                //currently OkPay does not support a separate parameter discounts and gift cards.
-                //therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
-                //TODO: Uncomment next time
-                //passProductNamesAndTotals = okPayPaymentSettings.PassProductNamesAndTotals,
+                PassBillingInfo = okPayPaymentSettings.PassBillingInfo,
                 Fees = okPayPaymentSettings.Fees,
                 ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage = okPayPaymentSettings.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage,
             };
@@ -130,20 +127,13 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             if (storeScope > 0)
             {
                 model.WalletId_OverrideForStore = _settingService.SettingExists(okPayPaymentSettings, x => x.WalletId, storeScope);
-                model.OrderDescription_OverrideForStore = _settingService.SettingExists(okPayPaymentSettings,
-                    x => x.OrderDescription, storeScope);
-                //currently OkPay does not support a separate parameter discounts and gift cards.
-                //therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
-                //TODO: Uncomment next time
-                //model.PassProductNamesAndTotals_OverrideForStore = _settingService.SettingExists(okPayPaymentSettings,
-                //    x => x.PassProductNamesAndTotals, storeScope);
+                model.OrderDescription_OverrideForStore = _settingService.SettingExists(okPayPaymentSettings, x => x.OrderDescription, storeScope);
+                model.PassBillingInfo_OverrideForStore = _settingService.SettingExists(okPayPaymentSettings, x => x.PassBillingInfo, storeScope);
                 model.Fees_OverrideForStore = _settingService.SettingExists(okPayPaymentSettings, x => x.Fees, storeScope);
-                model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage_OverrideForStore =
-                    _settingService.SettingExists(okPayPaymentSettings,
-                        x => x.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage, storeScope);
+                model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage_OverrideForStore = _settingService.SettingExists(okPayPaymentSettings, x => x.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage, storeScope);
             }
 
-            return View("~/Plugins/Payments.OkPay/Views/PaymentOkPay/Configure.cshtml", model);
+            return View("~/Plugins/Payments.OkPay/Views/Configure.cshtml", model);
         }
 
         [HttpPost]
@@ -161,26 +151,16 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             //save settings
             okPayPaymentSettings.WalletId = model.WalletId;
             okPayPaymentSettings.OrderDescription = model.OrderDescription;
-            //currently OkPay does not support a separate parameter discounts and gift cards.
-            //therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
-            //TODO: Uncomment next time
-            //okPayPaymentSettings.PassProductNamesAndTotals = model.PassProductNamesAndTotals;
             okPayPaymentSettings.Fees = model.Fees;
-            okPayPaymentSettings.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage =
-                model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage;
+            okPayPaymentSettings.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage = model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage;
+            okPayPaymentSettings.PassBillingInfo = model.PassBillingInfo;
 
-            /* we do not clear cache after each setting update.
-             * this behavior can increase performance because cached settings will not be cleared 
-             * and loaded from database after each update */
             _settingService.SaveSettingOverridablePerStore(okPayPaymentSettings, x => x.WalletId, model.WalletId_OverrideForStore, storeScope, false);
             _settingService.SaveSettingOverridablePerStore(okPayPaymentSettings, x => x.OrderDescription, model.OrderDescription_OverrideForStore, storeScope, false);
-            //currently OkPay does not support a separate parameter discounts and gift cards.
-            //therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
-            //TODO: Uncomment next time
-            //_settingService.SaveSettingOverridablePerStore(okPayPaymentSettings, x => x.PassProductNamesAndTotals, model.PassProductNamesAndTotals_OverrideForStore, storeScope, false);
+            _settingService.SaveSettingOverridablePerStore(okPayPaymentSettings, x => x.PassBillingInfo, model.PassBillingInfo_OverrideForStore, storeScope, false);
             _settingService.SaveSettingOverridablePerStore(okPayPaymentSettings, x => x.Fees, model.Fees_OverrideForStore, storeScope, false);
             _settingService.SaveSettingOverridablePerStore(okPayPaymentSettings, x => x.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage, model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage_OverrideForStore, storeScope, false);
-
+            
             //now clear settings cache
             _settingService.ClearCache();
 
@@ -192,7 +172,7 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
         [ChildActionOnly]
         public ActionResult PaymentInfo()
         {
-            return View("~/Plugins/Payments.OkPay/Views/PaymentOkPay/PaymentInfo.cshtml");
+            return View("~/Plugins/Payments.OkPay/Views/PaymentInfo.cshtml");
         }
 
         [NonAction]

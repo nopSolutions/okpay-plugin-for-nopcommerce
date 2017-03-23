@@ -110,7 +110,7 @@ namespace Nop.Plugin.Payments.OkPay
                     return TransactionStatus.Error;
             }
         }
-
+        
         #endregion
 
         #region Methods
@@ -126,10 +126,8 @@ namespace Nop.Plugin.Payments.OkPay
         public void PostProcessPayment(PostProcessPaymentRequest postProcessPaymentRequest)
         {
             var orderTotal = postProcessPaymentRequest.Order.OrderTotal;
-            var amount = String.Format(CultureInfo.InvariantCulture, "{0:0.00}", orderTotal);
+            var amount = string.Format(CultureInfo.InvariantCulture, "{0:0.00}", orderTotal);
             var orderId = postProcessPaymentRequest.Order.Id;
-            //TODO: Uncomment next time
-            //var orderItems = postProcessPaymentRequest.Order.OrderItems.ToList();
             var currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
             var enumerator = 1;
             var storeUrl = _webHelper.GetStoreLocation();
@@ -140,142 +138,42 @@ namespace Nop.Plugin.Payments.OkPay
                 Url = Constants.OK_PAYMENT_URL
             };
 
-            //TODO: After finish tests, remove this IF DEBUG block
-#if DEBUG
-            var ipnUrl = "https://www.nopcommerce.com/RecordQueryTest.aspx";
-#else 
-            // URL`s
-            var ipnUrl = String.Concat(storeUrl, "plugins/okpay/ipnhandler");
-#endif
-            var successUrl = String.Concat(storeUrl, "plugins/okpay/success");
-            var failUrl = String.Concat(storeUrl, "plugins/okpay/fail");
+            //var ipnUrl = "https://www.nopcommerce.com/RecordQueryTest.aspx";
+            var ipnUrl = string.Concat(storeUrl, "plugins/okpay/ipnhandler");
+
+            var successUrl = string.Concat(storeUrl, "plugins/okpay/success");
+            var failUrl = string.Concat(storeUrl, "plugins/okpay/fail");
             form.Add(Constants.OK_IPN_URL_KEY, ipnUrl);
             form.Add(Constants.OK_RETURN_SUCCESS_URL_KEY, successUrl);
             form.Add(Constants.OK_RETURN_FAIL_URL_KEY, failUrl);
 
             form.Add(Constants.OK_RECEIVER_KEY, _okPayPaymentSettings.WalletId);
-            /*
-            Currently OkPay does not support a separate parameter discounts and gift cards. 
-            Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
 
-            TODO: Uncomment next time
-            */
-
-            //if (_okPayPaymentSettings.PassProductNamesAndTotals)
-            //{
-            //    decimal cartTotal = decimal.Zero;
-            //    // Send to OkPay order details information, include Product Name, Quantity, Price and SKU
-            //    foreach (var item in orderItems)
-            //    {
-            //        form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), item.Product.Name);
-            //        form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), item.Quantity.ToString());
-            //        form.Add(String.Format(Constants.OK_ITEM_TYPE_FORMATED_KEY, enumerator),
-            //            item.Product.IsDownload ? "digital" : "shipment");
-            //        if (!string.IsNullOrEmpty(item.Product.Sku))
-            //            form.Add(String.Format(Constants.OK_ITEM_ARTICLE_FORMATED_KEY, enumerator), item.Product.Sku);
-            //        form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator),
-            //            String.Format(CultureInfo.InvariantCulture, "{0:0.00}", Math.Round(item.UnitPriceExclTax, 2)));
-            //        cartTotal += item.PriceExclTax;
-            //        enumerator++;
-            //    }
-            //    // attributes
-            //    var attributeValues =
-            //        _checkoutAttributeParser.ParseCheckoutAttributeValues(
-            //            postProcessPaymentRequest.Order.CheckoutAttributesXml);
-            //    foreach (var val in attributeValues)
-            //    {
-            //        var attPrice = _taxService.GetCheckoutAttributePrice(val, false,
-            //            postProcessPaymentRequest.Order.Customer);
-            //        //round
-            //        var attPriceRounded = Math.Round(attPrice, 2);
-            //        if (attPrice > decimal.Zero) //if it has a price
-            //        {
-            //            var attribute = val.CheckoutAttribute;
-            //            if (attribute != null)
-            //            {
-            //                var attName = attribute.Name; //set the name
-            //                form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), attName);
-            //                form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), "1");
-            //                form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator),
-            //                    attPriceRounded.ToString("0.00", CultureInfo.InvariantCulture));
-            //                enumerator++;
-            //                cartTotal += attPrice;
-            //            }
-            //        }
-            //    }
-            //    //shipping
-            //    var orderShippingExclTax = postProcessPaymentRequest.Order.OrderShippingExclTax;
-            //    var orderShippingExclTaxRounded = Math.Round(orderShippingExclTax, 2);
-            //    if (orderShippingExclTax > decimal.Zero)
-            //    {
-            //        form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), "Shipping fee");
-            //        form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), "1");
-            //        form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator),
-            //            orderShippingExclTaxRounded.ToString("0.00", CultureInfo.InvariantCulture));
-            //        enumerator++;
-            //        cartTotal += orderShippingExclTax;
-            //    }
-
-            //    //payment method additional fee
-            //    var paymentMethodAdditionalFeeExclTax =
-            //        postProcessPaymentRequest.Order.PaymentMethodAdditionalFeeExclTax;
-            //    var paymentMethodAdditionalFeeExclTaxRounded = Math.Round(paymentMethodAdditionalFeeExclTax, 2);
-            //    if (paymentMethodAdditionalFeeExclTax > decimal.Zero)
-            //    {
-            //        form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), "Payment method fee");
-            //        form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), "1");
-            //        form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator),
-            //            paymentMethodAdditionalFeeExclTaxRounded.ToString("0.00", CultureInfo.InvariantCulture));
-            //        enumerator++;
-            //        cartTotal += paymentMethodAdditionalFeeExclTax;
-            //    }
-
-            //    // tax
-            //    var orderTax = postProcessPaymentRequest.Order.OrderTax;
-            //    var orderTaxRounded = Math.Round(orderTax, 2);
-            //    if (orderTax > decimal.Zero)
-            //    {
-            //        //add tax as item
-            //        form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), "Sales Tax");
-            //        form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), "1");
-            //        form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator),
-            //            orderTaxRounded.ToString("0.00", CultureInfo.InvariantCulture));
-            //        cartTotal += orderTax;
-            //    }
-
-            //    if (cartTotal > postProcessPaymentRequest.Order.OrderTotal)
-            //    {
-            //        decimal discountTotal = cartTotal - postProcessPaymentRequest.Order.OrderTotal;
-            //        discountTotal = Math.Round(discountTotal, 2);
-            //    }
-            //}
-            //else
-            //{
-            form.Add(String.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), string.Format(_okPayPaymentSettings.OrderDescription, orderId));
-            form.Add(String.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), "1");
-            form.Add(String.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator), amount);
-            //}
+            form.Add(string.Format(Constants.OK_ITEM_NAME_FORMATED_KEY, enumerator), string.Format(_okPayPaymentSettings.OrderDescription, orderId));
+            form.Add(string.Format(Constants.OK_ITEM_QTY_FORMATED_KEY, enumerator), "1");
+            form.Add(string.Format(Constants.OK_ITEM_PRICE_FORMATED_KEY, enumerator), amount);
 
             form.Add(Constants.OK_KIND_KEY, "payment");
             form.Add(Constants.OK_INVOICE_KEY, orderId.ToString());
             form.Add(Constants.OK_CURRENCY_KEY, currency.CurrencyCode);
             form.Add(Constants.OK_FEES_KEY, _okPayPaymentSettings.Fees.ToString());
-            //General info
-            // if you want to send the personal data of the customer, you can uncomment the following code
 
-            //var billingInfo = postProcessPaymentRequest.Order.BillingAddress;
-            //form.Add(Constants.OK_PAYER_FIRST_NAME_KEY, billingInfo.FirstName.ToTransliterate());
-            //form.Add(Constants.OK_PAYER_LAST_NAME_KEY, billingInfo.LastName.ToTransliterate());
-            //if (!string.IsNullOrEmpty(billingInfo.Company))
-            //    form.Add(Constants.OK_PAYER_COMPANY_NAME_KEY, billingInfo.Company.ToTransliterate());
-            //form.Add(Constants.OK_PAYER_EMAIL_KEY, billingInfo.Email.ToTransliterate());
-            //form.Add(Constants.OK_PAYER_PHONE_KEY, billingInfo.PhoneNumber.ToTransliterate());
-            //form.Add(Constants.OK_PAYER_COUNTRY_CODE_KEY, billingInfo.Country.TwoLetterIsoCode.ToTransliterate());
-            //form.Add(Constants.OK_PAYER_COUNTRY_KEY, billingInfo.Country.Name.ToTransliterate());
-            //form.Add(Constants.OK_PAYER_CITY_KEY, billingInfo.City.ToTransliterate());
-            //form.Add(Constants.OK_PAYER_STATE_KEY, billingInfo.StateProvince.Name);
-            //form.Add(Constants.OK_PAYER_STREET_KEY, billingInfo.Address1);
-            //form.Add(Constants.OK_PAYER_ZIP_KEY, billingInfo.ZipPostalCode);
+            if (_okPayPaymentSettings.PassBillingInfo)
+            {
+                var billingInfo = postProcessPaymentRequest.Order.BillingAddress;
+                form.Add(Constants.OK_PAYER_FIRST_NAME_KEY, billingInfo.FirstName.ToTransliterate());
+                form.Add(Constants.OK_PAYER_LAST_NAME_KEY, billingInfo.LastName.ToTransliterate());
+                if (!string.IsNullOrEmpty(billingInfo.Company))
+                    form.Add(Constants.OK_PAYER_COMPANY_NAME_KEY, billingInfo.Company.ToTransliterate());
+                form.Add(Constants.OK_PAYER_EMAIL_KEY, billingInfo.Email.ToTransliterate());
+                form.Add(Constants.OK_PAYER_PHONE_KEY, billingInfo.PhoneNumber.ToTransliterate());
+                form.Add(Constants.OK_PAYER_COUNTRY_CODE_KEY, billingInfo.Country.TwoLetterIsoCode.ToTransliterate());
+                form.Add(Constants.OK_PAYER_COUNTRY_KEY, billingInfo.Country.Name.ToTransliterate());
+                form.Add(Constants.OK_PAYER_CITY_KEY, billingInfo.City.ToTransliterate());
+                form.Add(Constants.OK_PAYER_STATE_KEY, billingInfo.StateProvince.Name);
+                form.Add(Constants.OK_PAYER_STREET_KEY, billingInfo.Address1);
+                form.Add(Constants.OK_PAYER_ZIP_KEY, billingInfo.ZipPostalCode);
+            }
 
             form.Post();
         }
@@ -371,17 +269,15 @@ namespace Nop.Plugin.Payments.OkPay
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.RedirectionTip", "You will be redirected to OKPAY site to complete the order.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId", "Wallet ID");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId.Hint", "Specify your OkPay wallet Id.");
-            //currently OkPay does not support a separate parameter discounts and gift cards.
-            //therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
-            //TODO: Uncomment next time
-            //this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassProductNamesAndTotals", "Pass product names and order totals to OkPay");
-            //this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassProductNamesAndTotals.Hint", "Check if product names and order totals should be passed to OkPay.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo", "Pass pass billing info to OkPay");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo.Hint", "Check if billing info should be passed to OkPay.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees", "Commission payable");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Hint", "Merchant – commission payable by the merchant (default); Buyer – commission payable by the buyer.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Merchant", "Merchant");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Buyer", "Buyer");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage", "Return to order details page");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage.Hint", "Enable if a customer should be redirected to the order details page when he clicks \"return to store\" link on OkPay site WITHOUT completing a payment.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.PaymentMethodDescription", "You will be redirected to OKPAY site to complete the order.");
 
             base.Install();
         }
@@ -393,17 +289,15 @@ namespace Nop.Plugin.Payments.OkPay
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.RedirectionTip");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId.Hint");
-            //currently OkPay does not support a separate parameter discounts and gift cards.
-            //therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
-            //TODO: Uncomment next time
-            //this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassProductNamesAndTotals");
-            //this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassProductNamesAndTotals.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo");
+            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Merchant");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Buyer");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage");
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.PaymentMethodDescription");
 
             base.Uninstall();
         }
@@ -418,7 +312,15 @@ namespace Nop.Plugin.Payments.OkPay
         public bool SupportVoid { get { return false; } }
         public RecurringPaymentType RecurringPaymentType { get { return RecurringPaymentType.NotSupported; } }
         public PaymentMethodType PaymentMethodType { get { return PaymentMethodType.Redirection; } }
-        public bool SkipPaymentInfo { get; private set; }
+        public bool SkipPaymentInfo { get { return false; } }
+
+        /// <summary>
+        /// Gets a payment method description that will be displayed on checkout pages in the public store
+        /// </summary>
+        public string PaymentMethodDescription
+        {
+            get { return _localizationService.GetResource("Plugins.Payments.OKPAY.PaymentMethodDescription"); }
+        }
 
         #endregion
     }

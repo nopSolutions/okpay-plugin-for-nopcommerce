@@ -60,23 +60,16 @@
                         @Html.ValidationMessageFor(model => model.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
                     </div>
                 </div>
-@*
-                Currently OkPay does not support a separate parameter discounts and gift cards.
-                Therefore, the code commented out. OkPay developers promise to include support for gift cards in the near future.
-                TODO: Uncomment next time 
-*@
-@*
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.OverrideStoreCheckboxFor(model => model.PassProductNamesAndTotals_OverrideForStore, model => model.PassProductNamesAndTotals, Model.ActiveStoreScopeConfiguration)
-                        @Html.NopLabelFor(model => model.PassProductNamesAndTotals)
+                        @Html.OverrideStoreCheckboxFor(model => model.PassBillingInfo_OverrideForStore, model => model.PassBillingInfo, Model.ActiveStoreScopeConfiguration)
+                        @Html.NopLabelFor(model => model.PassBillingInfo)
                     </div>
                     <div class="col-md-9">
-                        @Html.EditorFor(model => model.PassProductNamesAndTotals)
-                        @Html.ValidationMessageFor(model => model.PassProductNamesAndTotals)
+                        @Html.EditorFor(model => model.PassBillingInfo)
+                        @Html.ValidationMessageFor(model => model.PassBillingInfo)
                     </div>
                 </div>
-*@
                 <div class="form-group">
                     <div class="col-md-9 col-md-offset-3">
                         <input type="submit" name="save" class="btn bg-blue" value="@T("Admin.Common.Save")"/>
