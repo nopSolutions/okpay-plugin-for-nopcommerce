@@ -1,6 +1,6 @@
-﻿using System.Web.Mvc;
-using System.Web.Routing;
-using Nop.Web.Framework.Mvc.Routes;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
+using Nop.Web.Framework.Mvc.Routing;
 
 namespace Nop.Plugin.Payments.OkPay
 {
@@ -8,32 +8,26 @@ namespace Nop.Plugin.Payments.OkPay
     {
         #region Methods
 
-        public void RegisterRoutes(RouteCollection routes)
+        public void RegisterRoutes(IRouteBuilder routeBuilder)
         {
             //IPN handler
-            routes.MapRoute("Plugin.Payments.OkPay.IPNHandler",
+            routeBuilder.MapRoute("Plugin.Payments.OkPay.IPNHandler",
                  "plugins/okpay/ipnhandler",
-                 new { controller = "PaymentOkPay", action = "IPNHandler" },
-                 new[] { "Nop.Plugin.Payments.OkPay.Controllers" }
-            );
+                 new { controller = "PaymentOkPay", action = "IPNHandler" });
             //fail
-            routes.MapRoute("Plugin.Payments.OkPay.Fail",
+            routeBuilder.MapRoute("Plugin.Payments.OkPay.Fail",
                  "plugins/okpay/fail",
-                 new { controller = "PaymentOkPay", action = "Fail" },
-                 new[] { "Nop.Plugin.Payments.OkPay.Controllers" }
-            );
+                 new { controller = "PaymentOkPay", action = "Fail" });
             //success
-            routes.MapRoute("Plugin.Payments.OkPay.Success",
+            routeBuilder.MapRoute("Plugin.Payments.OkPay.Success",
                  "plugins/okpay/success",
-                 new { controller = "PaymentOkPay", action = "Success" },
-                 new[] { "Nop.Plugin.Payments.OkPay.Controllers" }
-            );
+                 new { controller = "PaymentOkPay", action = "Success" });
         }
 
         #endregion
 
         #region Properties
-
+        
         public int Priority
         {
             get

@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
@@ -13,8 +13,11 @@ using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
+using Nop.Services.Security;
 using Nop.Services.Stores;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
+using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.Payments.OkPay.Controllers
 {
@@ -32,6 +35,7 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
         private readonly ILocalizationService _localizationService;
         private readonly IWebHelper _webHelper;
         private readonly PaymentSettings _paymentSettings;
+        private readonly IPermissionService _permissionService;
 
         #endregion
 
@@ -45,7 +49,8 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             IOrderProcessingService orderProcessingService,
             ILocalizationService localizationService, 
             IWebHelper webHelper,
-            PaymentSettings paymentSettings)
+            PaymentSettings paymentSettings,
+            IPermissionService permissionService)
         {
             this._workContext = workContext;
             this._storeService = storeService;
@@ -57,6 +62,7 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             this._localizationService = localizationService;
             this._webHelper = webHelper;
             this._paymentSettings = paymentSettings;
+            this._permissionService = permissionService;
         }
 
         #endregion
@@ -73,15 +79,15 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             return processor;
         }
 
-        private string GetValue(string key, FormCollection form)
+        private string GetValue(string key, IFormCollection form)
         {
-            return (form.AllKeys.Contains(key) ? form[key] : _webHelper.QueryString<string>(key)) ?? String.Empty;
+            return (form.Keys.Contains(key) ? form[key].ToString() : _webHelper.QueryString<string>(key)) ?? string.Empty;
         }
 
-        private string PreparationOrderNote(FormCollection form)
+        private string PreparationOrderNote(IFormCollection form)
         {
             var sb = new StringBuilder();
-            foreach (var key in form.AllKeys)
+            foreach (var key in form.Keys)
             {
                 sb.AppendLine(key + ": " + GetValue(key, form));
             }
@@ -92,10 +98,13 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
 
         #region Methods
 
-        [AdminAuthorize]
-        [ChildActionOnly]
-        public ActionResult Configure()
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult Configure()
         {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePaymentMethods))
+                return AccessDeniedView();
+
             //load settings for a chosen store scope
             var storeScope = this.GetActiveStoreScopeConfiguration(_storeService, _workContext);
             var okPayPaymentSettings = _settingService.LoadSetting<OkPayPaymentSettings>(storeScope);
@@ -137,10 +146,13 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
         }
 
         [HttpPost]
-        [AdminAuthorize]
-        [ChildActionOnly]
-        public ActionResult Configure(ConfigurationModel model)
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult Configure(ConfigurationModel model)
         {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePaymentMethods))
+                return AccessDeniedView();
+
             if (!ModelState.IsValid)
                 return Configure();
 
@@ -168,35 +180,15 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
 
             return Configure();
         }
-
-        [ChildActionOnly]
-        public ActionResult PaymentInfo()
+        
+        public IActionResult IPNHandler()
         {
-            return View("~/Plugins/Payments.OkPay/Views/PaymentInfo.cshtml");
-        }
-
-        [NonAction]
-        public override IList<string> ValidatePaymentForm(FormCollection form)
-        {
-            return new List<string>();
-        }
-
-        [NonAction]
-        public override ProcessPaymentRequest GetPaymentInfo(FormCollection form)
-        {
-            return new ProcessPaymentRequest();
-        }
-
-        [ValidateInput(false)]
-        public ActionResult IPNHandler(FormCollection form)
-        {
+            var form = Request.Form;
             var processor = GetPaymentProcessor();
-            TransactionStatus txnStatus;
-            if (processor.VerifyIpn(form, out txnStatus))
+            if (processor.VerifyIpn(form, out TransactionStatus txnStatus))
             {
                 var val = GetValue(Constants.OK_INVOICE_KEY, form);
-                int orderId;
-                if (!String.IsNullOrEmpty(val) && Int32.TryParse(val, out orderId))
+                if (!string.IsNullOrEmpty(val) && int.TryParse(val, out int orderId))
                 {
                     var order = _orderService.GetOrderById(orderId);
 
@@ -240,47 +232,36 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             return Content("");
         }
 
-        public ActionResult Fail(FormCollection form)
+        public IActionResult Fail()
         {
-            var storeScope = this.GetActiveStoreScopeConfiguration(_storeService, _workContext);
+            var form = Request.Form;
+            var storeScope = GetActiveStoreScopeConfiguration(_storeService, _workContext);
             var okPayPaymentSettings = _settingService.LoadSetting<OkPayPaymentSettings>(storeScope);
-            if (okPayPaymentSettings.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
-            {
-                var val = GetValue(Constants.OK_INVOICE_KEY, form);
-                int orderId;
-                if (!String.IsNullOrEmpty(val) && Int32.TryParse(val, out orderId))
-                {
-                    var order = _orderService.GetOrderById(orderId);
-                    if (order != null)
-                    {
-                        return RedirectToRoute("OrderDetails", new { orderId = order.Id });
-                    }
-                }
-            }
-            return RedirectToRoute("HomePage");
+            if (!okPayPaymentSettings.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
+                return RedirectToRoute("HomePage");
+
+            var val = GetValue(Constants.OK_INVOICE_KEY, form);
+            if (string.IsNullOrEmpty(val) || !int.TryParse(val, out int orderId))
+                return RedirectToRoute("HomePage");
+
+            var order = _orderService.GetOrderById(orderId);
+            return order != null ? RedirectToRoute("OrderDetails", new { orderId = order.Id }) : RedirectToRoute("HomePage");
         }
 
-        public ActionResult Success(FormCollection form)
+        public IActionResult Success(FormCollection form)
         {
             var val = GetValue(Constants.OK_INVOICE_KEY, form);
-            int orderId;
-            if (!String.IsNullOrEmpty(val) && Int32.TryParse(val, out orderId))
-            {
-                var order = _orderService.GetOrderById(orderId);
-                if (order != null)
-                {
-                    var processor = GetPaymentProcessor();
-                    TransactionStatus txnStatus;
-                    if (processor.VerifyIpn(form, out txnStatus))
-                    {
-                        if (txnStatus == TransactionStatus.Completed)
-                            return RedirectToRoute("CheckoutCompleted", new { orderId = order.Id });
-                        else
-                            return RedirectToRoute("OrderDetails", new { orderId = order.Id });
-                    }
-                }
-            }
-            return RedirectToRoute("HomePage");
+            if (string.IsNullOrEmpty(val) || !int.TryParse(val, out int orderId))
+                return RedirectToRoute("HomePage");
+            var order = _orderService.GetOrderById(orderId);
+            if (order == null)
+                return RedirectToRoute("HomePage");
+
+            var processor = GetPaymentProcessor();
+            if (!processor.VerifyIpn(form, out TransactionStatus txnStatus))
+                return RedirectToRoute("HomePage");
+
+            return RedirectToRoute(txnStatus == TransactionStatus.Completed ? "CheckoutCompleted" : "OrderDetails", new { orderId = order.Id });
         }
 
         #endregion

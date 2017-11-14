@@ -1,7 +1,6 @@
 ﻿/*
  Customized version of library https://unidecode.codeplex.com/
  */
-
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -559,7 +558,7 @@ namespace Nop.Plugin.Payments.OkPay.Infrastructure
         #region Methods
         internal static string Unidecode(this string input)
         {
-            if (String.IsNullOrEmpty(input)) return input;
+            if (string.IsNullOrEmpty(input)) return input;
             var output = new StringBuilder();
             foreach (var c in input.ToCharArray())
             {

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Globalization;
 using System.Net;
-using System.Web.Mvc;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
 using Nop.Core;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Orders;
@@ -57,16 +57,23 @@ namespace Nop.Plugin.Payments.OkPay
         /// <param name="formCollection">Form string</param>
         /// <param name="status">out Transaction Status</param>
         /// <returns>Result</returns>
-        public bool VerifyIpn(FormCollection formCollection, out TransactionStatus status)
+        public bool VerifyIpn(IFormCollection formCollection, out TransactionStatus status)
         {
             var isVerified = false;
+           
+
             if (formCollection != null)
             {
-                formCollection.Add(Constants.OK_VERIFY_KEY, "true");
+                var data = new NameValueCollection();
+                foreach (var pair in formCollection)
+                {
+                    data.Add(pair.Key, pair.Value);
+                }
+                data.Add(Constants.OK_VERIFY_KEY, "true");
 
                 using (var client = new WebClient())
                 {
-                    var resultBytes = client.UploadValues(Constants.OK_VERIFY_URL, "POST", formCollection);
+                    var resultBytes = client.UploadValues(Constants.OK_VERIFY_URL, "POST", data);
                     var result = System.Text.Encoding.Default.GetString(resultBytes);
                     // for IPN simulation testing response may be TEST
                     if (result.Equals("VERIFIED", StringComparison.InvariantCultureIgnoreCase) ||
@@ -232,7 +239,7 @@ namespace Nop.Plugin.Payments.OkPay
         {
             if (order == null)
             {
-                throw new ArgumentNullException("order");
+                throw new ArgumentNullException(nameof(order));
             }
             return (DateTime.UtcNow - order.CreatedOnUtc).TotalMinutes >= 1.0;
         }
@@ -242,18 +249,19 @@ namespace Nop.Plugin.Payments.OkPay
             return typeof(PaymentOkPayController);
         }
 
-        public void GetPaymentInfoRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
+        public override string GetConfigurationPageUrl()
         {
-            actionName = "PaymentInfo";
-            controllerName = "PaymentOkPay";
-            routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.OkPay.Controllers" }, { "area", null } };
+            return $"{_webHelper.GetStoreLocation()}Admin/PaymentOkPay/Configure";
         }
 
-        public void GetConfigurationRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
+        public IList<string> ValidatePaymentForm(IFormCollection form)
         {
-            actionName = "Configure";
-            controllerName = "PaymentOkPay";
-            routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.OkPay.Controllers" }, { "area", null } };
+            return new List<string>();
+        }
+
+        public ProcessPaymentRequest GetPaymentInfo(IFormCollection form)
+        {
+            return new ProcessPaymentRequest();
         }
 
         public override void Install()
@@ -269,7 +277,7 @@ namespace Nop.Plugin.Payments.OkPay
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.RedirectionTip", "You will be redirected to OKPAY site to complete the order.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId", "Wallet ID");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId.Hint", "Specify your OkPay wallet Id.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo", "Pass pass billing info to OkPay");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo", "Pass billing info to OkPay");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo.Hint", "Check if billing info should be passed to OkPay.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees", "Commission payable");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Hint", "Merchant – commission payable by the merchant (default); Buyer – commission payable by the buyer.");
@@ -281,6 +289,7 @@ namespace Nop.Plugin.Payments.OkPay
 
             base.Install();
         }
+
         public override void Uninstall()
         {
             _settingService.DeleteSetting<OkPayPaymentSettings>();
@@ -300,6 +309,11 @@ namespace Nop.Plugin.Payments.OkPay
             this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.PaymentMethodDescription");
 
             base.Uninstall();
+        }
+
+        public void GetPublicViewComponent(out string viewComponentName)
+        {
+            viewComponentName = "PaymentOkPay";
         }
 
         #endregion
