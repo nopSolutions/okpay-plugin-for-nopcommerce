@@ -181,9 +181,9 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             return Configure();
         }
         
-        public IActionResult IPNHandler()
+        public IActionResult IPNHandler(IpnModel model)
         {
-            var form = Request.Form;
+            var form = model.Form;
             var processor = GetPaymentProcessor();
             if (processor.VerifyIpn(form, out TransactionStatus txnStatus))
             {
@@ -232,9 +232,9 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             return Content("");
         }
 
-        public IActionResult Fail()
+        public IActionResult Fail(IpnModel model)
         {
-            var form = Request.Form;
+            var form = model.Form;
             var storeScope = GetActiveStoreScopeConfiguration(_storeService, _workContext);
             var okPayPaymentSettings = _settingService.LoadSetting<OkPayPaymentSettings>(storeScope);
             if (!okPayPaymentSettings.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
