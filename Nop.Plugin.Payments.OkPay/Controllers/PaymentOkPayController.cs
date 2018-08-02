@@ -14,7 +14,6 @@ using Nop.Services.Logging;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Security;
-using Nop.Services.Stores;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
@@ -26,7 +25,7 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
         #region Fields
 
         private readonly IWorkContext _workContext;
-        private readonly IStoreService _storeService;
+        private readonly IStoreContext _storeContext;
         private readonly ISettingService _settingService;
         private readonly ILogger _logger;
         private readonly IPaymentService _paymentService;
@@ -34,14 +33,13 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
         private readonly IOrderProcessingService _orderProcessingService;
         private readonly ILocalizationService _localizationService;
         private readonly IWebHelper _webHelper;
-        private readonly PaymentSettings _paymentSettings;
         private readonly IPermissionService _permissionService;
 
         #endregion
 
         #region Ctor
         public PaymentOkPayController(IWorkContext workContext,
-            IStoreService storeService,
+            IStoreContext storeContext,
             ISettingService settingService,
             ILogger logger,
             IPaymentService paymentService,
@@ -49,11 +47,10 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             IOrderProcessingService orderProcessingService,
             ILocalizationService localizationService, 
             IWebHelper webHelper,
-            PaymentSettings paymentSettings,
             IPermissionService permissionService)
         {
             this._workContext = workContext;
-            this._storeService = storeService;
+            this._storeContext = storeContext;
             this._settingService = settingService;
             this._logger = logger;
             this._paymentService = paymentService;
@@ -61,7 +58,6 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             this._orderProcessingService = orderProcessingService;
             this._localizationService = localizationService;
             this._webHelper = webHelper;
-            this._paymentSettings = paymentSettings;
             this._permissionService = permissionService;
         }
 
@@ -74,7 +70,7 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             var processor =
                 _paymentService.LoadPaymentMethodBySystemName("Payments.OkPay") as OkPayPaymentProcessor;
             if (processor == null ||
-                !processor.IsPaymentMethodActive(_paymentSettings) || !processor.PluginDescriptor.Installed)
+                !_paymentService.IsPaymentMethodActive(processor) || !processor.PluginDescriptor.Installed)
                 throw new NopException("OkPay module cannot be loaded");
             return processor;
         }
@@ -91,6 +87,7 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
             {
                 sb.AppendLine(key + ": " + GetValue(key, form));
             }
+
             return sb.ToString();
         }
 
@@ -106,7 +103,7 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
                 return AccessDeniedView();
 
             //load settings for a chosen store scope
-            var storeScope = this.GetActiveStoreScopeConfiguration(_storeService, _workContext);
+            var storeScope = _storeContext.ActiveStoreScopeConfiguration;
             var okPayPaymentSettings = _settingService.LoadSetting<OkPayPaymentSettings>(storeScope);
 
             var model = new ConfigurationModel
@@ -157,7 +154,7 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
                 return Configure();
 
             //load settings for a chosen store scope
-            var storeScope = this.GetActiveStoreScopeConfiguration(_storeService, _workContext);
+            var storeScope = _storeContext.ActiveStoreScopeConfiguration;
             var okPayPaymentSettings = _settingService.LoadSetting<OkPayPaymentSettings>(storeScope);
 
             //save settings
@@ -235,7 +232,7 @@ namespace Nop.Plugin.Payments.OkPay.Controllers
         public IActionResult Fail(IpnModel model)
         {
             var form = model.Form;
-            var storeScope = GetActiveStoreScopeConfiguration(_storeService, _workContext);
+            var storeScope = _storeContext.ActiveStoreScopeConfiguration;
             var okPayPaymentSettings = _settingService.LoadSetting<OkPayPaymentSettings>(storeScope);
             if (!okPayPaymentSettings.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage)
                 return RedirectToRoute("HomePage");

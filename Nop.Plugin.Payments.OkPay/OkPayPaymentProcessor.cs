@@ -59,8 +59,7 @@ namespace Nop.Plugin.Payments.OkPay
         /// <returns>Result</returns>
         public bool VerifyIpn(IFormCollection formCollection, out TransactionStatus status)
         {
-            var isVerified = false;
-           
+            var isVerified = false;           
 
             if (formCollection != null)
             {
@@ -69,6 +68,7 @@ namespace Nop.Plugin.Payments.OkPay
                 {
                     data.Add(pair.Key, pair.Value);
                 }
+
                 data.Add(Constants.OK_VERIFY_KEY, "true");
 
                 using (var client = new WebClient())
@@ -82,12 +82,14 @@ namespace Nop.Plugin.Payments.OkPay
                         isVerified = true;
                     }
                 }
+
                 status = GetStatus(formCollection[Constants.OK_TXN_STATUS_KEY]);
             }
             else
             {
                 status = TransactionStatus.Error;
             }
+
             return isVerified;
         }
 
@@ -241,6 +243,7 @@ namespace Nop.Plugin.Payments.OkPay
             {
                 throw new ArgumentNullException(nameof(order));
             }
+
             return (DateTime.UtcNow - order.CreatedOnUtc).TotalMinutes >= 1.0;
         }
 
@@ -272,20 +275,20 @@ namespace Nop.Plugin.Payments.OkPay
                 WalletId = "OK"
             };
             _settingService.SaveSetting(settings);
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OkPay.Fields.OrderDescription", "Order description");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OkPay.Fields.OrderDescription.Hint", "Order description template.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.RedirectionTip", "You will be redirected to OKPAY site to complete the order.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId", "Wallet ID");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId.Hint", "Specify your OkPay wallet Id.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo", "Pass billing info to OkPay");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo.Hint", "Check if billing info should be passed to OkPay.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees", "Commission payable");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Hint", "Merchant – commission payable by the merchant (default); Buyer – commission payable by the buyer.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Merchant", "Merchant");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Buyer", "Buyer");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage", "Return to order details page");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage.Hint", "Enable if a customer should be redirected to the order details page when he clicks \"return to store\" link on OkPay site WITHOUT completing a payment.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.PaymentMethodDescription", "You will be redirected to OKPAY site to complete the order.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OkPay.Fields.OrderDescription", "Order description");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OkPay.Fields.OrderDescription.Hint", "Order description template.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.RedirectionTip", "You will be redirected to OKPAY site to complete the order.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId", "Wallet ID");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId.Hint", "Specify your OkPay wallet Id.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo", "Pass billing info to OkPay");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo.Hint", "Check if billing info should be passed to OkPay.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees", "Commission payable");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Hint", "Merchant – commission payable by the merchant (default); Buyer – commission payable by the buyer.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Merchant", "Merchant");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Buyer", "Buyer");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage", "Return to order details page");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage.Hint", "Enable if a customer should be redirected to the order details page when he clicks \"return to store\" link on OkPay site WITHOUT completing a payment.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.OKPAY.PaymentMethodDescription", "You will be redirected to OKPAY site to complete the order.");
 
             base.Install();
         }
@@ -293,27 +296,31 @@ namespace Nop.Plugin.Payments.OkPay
         public override void Uninstall()
         {
             _settingService.DeleteSetting<OkPayPaymentSettings>();
-            this.DeletePluginLocaleResource("Plugins.Payments.OkPay.Fields.OrderDescription");
-            this.DeletePluginLocaleResource("Plugins.Payments.OkPay.Fields.OrderDescription.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.RedirectionTip");
-            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId");
-            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo");
-            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees");
-            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Merchant");
-            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Buyer");
-            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage");
-            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.OKPAY.PaymentMethodDescription");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OkPay.Fields.OrderDescription");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OkPay.Fields.OrderDescription.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.RedirectionTip");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.WalletId.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.PassBillingInfo.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Merchant");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.Fees.Item.Buyer");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OKPAY.Fields.ReturnFromOkPayWithoutPaymentRedirectsToOrderDetailsPage.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.OKPAY.PaymentMethodDescription");
 
             base.Uninstall();
         }
 
-        public void GetPublicViewComponent(out string viewComponentName)
+        /// <summary>
+        /// Gets a name of a view component for displaying plugin in public store ("payment info" checkout step)
+        /// </summary>
+        /// <returns>View component name</returns>
+        public string GetPublicViewComponentName()
         {
-            viewComponentName = "PaymentOkPay";
+            return "PaymentOkPay";
         }
 
         #endregion
